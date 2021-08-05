@@ -36,7 +36,7 @@ getprop disabled_Dev
 end disabled_Dev
 
 getprop disabled_GitStatus [scriptObject]
-   if project_IsActive ("lcw_GIT") is true then
+   if env_ProjectIsActive ("lcw_GIT") is true then
       return false
    else
       return "delete"
@@ -44,7 +44,7 @@ getprop disabled_GitStatus [scriptObject]
 end disabled_GitStatus
 
 getprop disabled_LoadGit
-   if project_IsActive ("lcw_GIT") is true then
+   if env_ProjectIsActive ("lcw_GIT") is true then
       return "delete"
    else
       return false
@@ -152,13 +152,13 @@ setprop search_Term searchTerm
 end search_Term
 
 getprop stack_Hashs [mTarget]
-   put the git_RelativeFile of mTarget into relativePath
-   return git_ReverseFileHashes (relativePath)
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_ReverseFileHashes (sFile)
 end stack_Hashs
 
 getprop back_Hashs [mTarget]
-   put the script_RelativeFile of mTarget into relativePath
-   return git_ReverseFileHashes (relativePath)
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_ReverseFileHashes (sFile)
 end back_Hashs
 
 getprop back_Nums

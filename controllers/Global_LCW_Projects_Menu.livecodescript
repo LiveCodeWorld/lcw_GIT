@@ -89,7 +89,7 @@ on _
 end _
 
 on menu_LocalProjects displayView
-   display_LcwProjectList
+   display_Environment
 end menu_LocalProjects
 
 on menu_GithubProjects displayView

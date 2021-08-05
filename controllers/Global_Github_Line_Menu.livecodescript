@@ -91,7 +91,7 @@ on menu_AddProjectWiki repoProjectName
    put "wiki" into projectArray ["projectType"]
    library_StoreProjectArray wikiProjectName, projectArray
    
-   display_LcwProjectList
+   display_Environment
 end menu_AddProjectWiki
 
 on menu_CreateGithubProjectPages repoProjectName

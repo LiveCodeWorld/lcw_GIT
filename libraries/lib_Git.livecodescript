@@ -15,6 +15,116 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working On
 -
+function git_GetLastRevision relativePath, gitHashOrNum
+   /*
+   drdave: “ is shell substitution operator. Shell runs the command inside and pastes its stdout over it and then runs the whole command.
+   <drdave>	k
+   <Ilari>	drdave: And that first one had one ' where there should have been `
+   <drdave>	I'm going to need to pass an actual path somewhere - can you give us an example with a path in it?
+   <Ilari>	drdave: For instance 'echo foo`echo bar`baz' prints 'foobarbaz'.
+   <Ilari>	drdave: git show `git rev-list -1 HEAD -- builtin-mv.c`^:builtin-mv.c
+   <drdave>	thanks.... will wrap my head round it :) Not quite got logic of shell substitution operator yet :)
+   <Ilari>	drdave: There's also another substitution operator: '$()'. That one can also be nested (and presumably has some other differences as well).
+   <drdave>	k
+   <drdave>	How would git show `git rev-list -1 HEAD -- builtin-mv.c`^:builtin-mv.c be written long hand then
+   <Ilari>	Quite useful to have nested substitutions when playing with commit-tree...
+   <drdave>	true
+   <drdave>	ah... think I'm getting it - its a sort of merge
+   <wshimmy>	arg
+   
+   <Ilari>	drdave: On my git.git copy (bit out of date), the rev-list resolves to 5aed3c6ab834367292bd7a9b0894177a07afd910, 
+   so the shell runs 'git show 5aed3c6ab834367292bd7a9b0894177a07afd910^:builtin-mv.c', 
+   which is equivalent to 'git show c8ba6b1b199bf00f227e8fdad4adb5a2147c8160:builtin-mv.c', 
+   which resolves to 'git show bce9959293e30925c4b16c40ac33a3f2e0474e30'
+   
+   <Gitbot>	[git 5aed3c6ab]: http://tinyurl.com/q8ac93 -- builtin-mv.c: check for unversionned files before looking at the destination.
+   <drdave>	everything between `xxxxxx` gets run and subsitituted - then the outer shell command is run - something like that ?
+   <Ilari>	drdave: Yes.
+   */
+   
+   git_SetRelativePath relativePath
+   
+   if gitHashOrNum is empty then put 0 into gitHashOrNum
+   if gitHashOrNum = 0 then
+      put merge("git show HEAD:[[relativePath]]") into someShell
+   else if gitHashOrNum = 1 then
+      -- put git_GetLastCommitHash(relativePath) into lastCommitHash -- seems really slow
+      put merge("git show `git rev-list -1 HEAD -- [[relativePath]]`^:[[relativePath]]") into someShell
+   else if gitHashOrNum is a number and gitHashOrNum < 99 then
+      breakpoint -- needs to be sFile
+      put git_GetCommitFileHash (relativePath, gitHashOrNum) into someHash
+      put merge("git show [[someHash]]:[[relativePath]]") into someShell
+   else
+      -- assume it is a hash
+      put merge("git show [[gitHashOrNum]]:[[relativePath]]") into someShell
+   end if
+   
+   /*
+   put "git show" into someShell
+   put space & "HEAD~" & pBackNum & ":" & kwote(relativePath) after someShell
+   */
+   
+   -- display_Lines someShell
+   put git_ExecuteShellCommand (someShell) into shellResult
+   -- text_UnixToMac shellResult
+   return shellResult
+end git_GetLastRevision
+
+
+--> GIT | Changed to full path
+-
+getprop git_CommitHash [pBackNum]
+   -- put the git_RelativeFile of the target into relativePath
+   put the filename of the target into sPath
+   put git_GetCommitFileHash (sPath, pBackNum) into commitHash
+   return commitHash
+end git_CommitHash
+
+function git_GetCommitFileHash sFile, pBackNum
+   if pBackNum is empty then put "1" into pBackNum
+   put git_ReverseFileHashes (sFile, pBackNum) into shellResult
+   return line - 1 of shellResult
+end git_GetCommitFileHash
+
+function git_ReverseFileHashes sFile, pMaxNum
+   if pMaxNum is empty then put "10" into pMaxNum
+   --
+   git_SetRelative sFile, relativePath, checkoutFolder -- full paths do not work with "git rev-list"
+   put merge("git rev-list -[[pMaxNum]] HEAD --") && kwote(relativePath) into someShell
+   --
+   put git_ExecuteShellCommand (someShell, checkoutFolder) into shellResult
+   return shellResult
+end git_ReverseFileHashes
+
+command git_SetRelative sFile, @relativePath, @checkoutFolder
+   local commonPath
+   put git_GetCheckOutFolder (sFile) into checkoutFolder
+   if there is not a folder checkoutFolder then return empty
+   put file_GetRelativePath (sFile, checkoutFolder, commonPath) into relativePath
+   return commonPath
+end git_SetRelative
+
+getprop git_RelativeFile [toWhat]
+   put the stack_Object of the target into stackObject
+   put the effective filename of stackObject into stackFile
+   switch toWhat
+      case "plugin folder"
+         put revEnvironmentUserPluginsPath() & "/" into baseFolder
+         break
+      default
+         put git_GetCheckoutFolder (stackFile) into baseFolder
+   end switch
+   file_SetRelativePath stackFile, baseFolder
+   return stackFile
+end git_RelativeFile
+
+function git_GetRelativeFile sFile
+   local checkoutFolder
+   git_SetRelative sFile, relativePath, checkoutFolder
+   return relativePath
+end git_GetRelativeFile
+
+
 --> GIT | Execute
 -
 function git_ExecuteShellCommand someShell, pCheckoutFolder
@@ -543,26 +653,6 @@ command git_CloneAndReplaceFolder gitURL, someFolder
    git_Clone gitURL, folderAbove, shortFolder
 end git_CloneAndReplaceFolder
 
-getprop git_RelativeFile [toWhat]
-   put the stack_Object of the target into stackObject
-   put the effective filename of stackObject into stackFile
-   switch toWhat
-      case "plugin folder"
-         put revEnvironmentUserPluginsPath() & "/" into baseFolder
-         break
-      default -- case "checkout folder"
-         put checkout_FindRoot (stackFile) into baseFolder
-   end switch
-   file_SetRelativePath stackFile, baseFolder
-   return stackFile
-end git_RelativeFile
-
-function git_GetRelativeFile someFile
-   put checkout_FindRoot (someFile) into baseFolder
-   file_SetRelativePath someFile, baseFolder
-   return someFile
-end git_GetRelativeFile
-
 
 --> Git | Apply
 -
@@ -864,60 +954,6 @@ getprop git_LastScript [pBackNum]
    return revisionScript
 end git_LastScript
 
-function git_GetLastRevision relativePath, gitHashOrNum
-   /*
-   drdave: “ is shell substitution operator. Shell runs the command inside and pastes its stdout over it and then runs the whole command.
-   <drdave>	k
-   <Ilari>	drdave: And that first one had one ' where there should have been `
-   <drdave>	I'm going to need to pass an actual path somewhere - can you give us an example with a path in it?
-   <Ilari>	drdave: For instance 'echo foo`echo bar`baz' prints 'foobarbaz'.
-   <Ilari>	drdave: git show `git rev-list -1 HEAD -- builtin-mv.c`^:builtin-mv.c
-   <drdave>	thanks.... will wrap my head round it :) Not quite got logic of shell substitution operator yet :)
-   <Ilari>	drdave: There's also another substitution operator: '$()'. That one can also be nested (and presumably has some other differences as well).
-   <drdave>	k
-   <drdave>	How would git show `git rev-list -1 HEAD -- builtin-mv.c`^:builtin-mv.c be written long hand then
-   <Ilari>	Quite useful to have nested substitutions when playing with commit-tree...
-   <drdave>	true
-   <drdave>	ah... think I'm getting it - its a sort of merge
-   <wshimmy>	arg
-   
-   <Ilari>	drdave: On my git.git copy (bit out of date), the rev-list resolves to 5aed3c6ab834367292bd7a9b0894177a07afd910, 
-   so the shell runs 'git show 5aed3c6ab834367292bd7a9b0894177a07afd910^:builtin-mv.c', 
-   which is equivalent to 'git show c8ba6b1b199bf00f227e8fdad4adb5a2147c8160:builtin-mv.c', 
-   which resolves to 'git show bce9959293e30925c4b16c40ac33a3f2e0474e30'
-   
-   <Gitbot>	[git 5aed3c6ab]: http://tinyurl.com/q8ac93 -- builtin-mv.c: check for unversionned files before looking at the destination.
-   <drdave>	everything between `xxxxxx` gets run and subsitituted - then the outer shell command is run - something like that ?
-   <Ilari>	drdave: Yes.
-   */
-   
-   git_SetRelativePath relativePath
-   
-   if gitHashOrNum is empty then put 0 into gitHashOrNum
-   if gitHashOrNum = 0 then
-      put merge("git show HEAD:[[relativePath]]") into someShell
-   else if gitHashOrNum = 1 then
-      -- put git_GetLastCommitHash(relativePath) into lastCommitHash -- seems really slow
-      put merge("git show `git rev-list -1 HEAD -- [[relativePath]]`^:[[relativePath]]") into someShell
-   else if gitHashOrNum is a number and gitHashOrNum < 99 then
-      put git_GetCommitFileHash (relativePath, gitHashOrNum) into someHash
-      put merge("git show [[someHash]]:[[relativePath]]") into someShell
-   else
-      -- assume it is a hash
-      put merge("git show [[gitHashOrNum]]:[[relativePath]]") into someShell
-   end if
-   
-   /*
-   put "git show" into someShell
-   put space & "HEAD~" & pBackNum & ":" & kwote(relativePath) after someShell
-   */
-   
-   -- display_Lines someShell
-   put git_ExecuteShellCommand (someShell) into shellResult
-   -- text_UnixToMac shellResult
-   return shellResult
-end git_GetLastRevision
-
 function git_HashRevision relativePath, someHash
    git_SetRelativePath relativePath
    
@@ -1023,21 +1059,6 @@ getprop git_StackHashLog [commitHash]
    put git_StackHashLog (relativeFile, commitHash) into gitLog
    return gitLog
 end git_StackHashLog
-
-getprop git_CommitHash [pBackNum]
-   put the git_RelativeFile of the target into relativePath
-   put git_GetCommitFileHash (relativePath, pBackNum) into commitHash
-   return commitHash
-end git_CommitHash
-
-getprop git_ScriptHash [pBackNum]
-   -- will often be commited at the same time as the stack
-   -- so often eqauls git_CommitHash
-   
-   put the script_RelativeFile of the target into relativePath
-   put git_GetCommitFileHash (relativePath, pBackNum) into commitHash
-   return commitHash
-end git_ScriptHash
 
 getprop git_ScriptFileLog
    put the script_File of the target into someFile
@@ -1363,24 +1384,11 @@ function git_CommitedFiles commitHash, pHashOutline
    return commitedFiles
 end git_CommitedFiles
 
-function git_GetCommitFileHash relativePath, pBackNum
-   if pBackNum is empty then put "1" into pBackNum
-   put git_ReverseFileHashes (relativePath, pBackNum) into shellResult
-   return line - 1 of shellResult
-end git_GetCommitFileHash
-
 function git_ListFiles
    put "git ls-files --stage" into someShell
    put git_ExecuteShellCommand(someShell) into shellResult
    return shellResult
 end git_ListFiles
-
-function git_ReverseFileHashes relativePath, pMaxNum
-   if pMaxNum is empty then put "10" into pMaxNum
-   put merge("git rev-list -[[pMaxNum]] HEAD --") && kwote(relativePath) into someShell
-   put git_ExecuteShellCommand(someShell) into shellResult
-   return shellResult
-end git_ReverseFileHashes
 
 command git_HardReset
    put "git reset --hard HEAD" into someShell

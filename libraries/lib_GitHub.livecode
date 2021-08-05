@@ -15,6 +15,70 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
+getprop git_Permalink
+   --put "ff7d015687d68217135e51347097cb36ed0817fe" into commit
+   put "LiveCodeWorld" into repoName
+   --
+   put the filename of the target into sFile
+   put git_GetCommitFileHash (sPath) into commitHash
+   git_SetRelative sFile, relativePath, checkoutFolder
+   -- put "libraries/lib_Help.livecodescript" into relativePath
+   --
+   set the itemdelimiter to slash
+   put repoName into repoBit
+   put item -1 of checkoutFolder into item 2 of repoBit
+   -- put "LiveCodeWorld/lcw_Help" into repoBit
+   
+   put github_GetPermalink (commitHash, repoBit, relativePath) into webPermalink
+   return webPermalink
+end git_Permalink
+
+function github_GetPermalink commitHash, repoBit, relativePath
+   -- https://github.com/LiveCodeWorld/lcw_Help/blob/ff7d015687d68217135e51347097cb36ed0817fe/libraries/lib_Help.livecodescript#L419-L433
+   put "https://github.com" into base
+   
+   # Construct
+   -- put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
+   put merge ("[[base]]/[[repoBit]]/blob/[[commitHash]]/[[relativePath]]") into webPermalink
+   
+   # Add lines
+   _AddLineBit webPermalink, pStartLineNum, pEendLineNum
+   
+   return webPermalink
+end github_GetPermalink
+
+private command _AddLineBit @permalinkURL, pStartLineNum, pEendLineNum
+   if pStartLineNum is a number then
+      put "#L" & pStartLineNum after permalinkURL
+   end if
+   if pEendLineNum is a number then
+      put "-L" & pEendLineNum after permalinkURL
+   end if
+end _AddLineBit
+
+getprop github_URL
+   put the stack_Name of the target into stackName
+   put github_GetUrl (stackName) into githubURL
+   return githubURL
+end github_URL
+
+getprop github_HandlerURL [shortHkey]
+   -- uses "revAvailableHandlers"
+   put the long id of the target into hObject
+   put the hkey_Line [shortHkey] of hObject into hTableLine
+   if hTableLine is empty then return empty
+   --
+   put word 2 of hTableLine into hName
+   put word 3 of hTableLine + 1 into sLineNum
+   put word 4 of hTableLine + 1 into eLineNum
+   --
+   put github_GetHandlerURL (hObject, sLineNum, eLineNum) into githubURL 
+   return githubURL
+end github_HandlerURL
+
+
+--> Launch
+-
 command github_Launch repoName, pPath
    put github_URLFromPath (pPath, repoName) into githubURL
    launch url githubURL
@@ -33,71 +97,14 @@ function github_ConstructLaunchUrl stackName, pRepoName
    return githubURL
 end github_ConstructLaunchUrl
 
-
---> Github | Props
--
-getprop github_URL
-   put the stack_Name of the target into stackName
-   put github_GetUrl (stackName) into githubURL
-   return githubURL
-end github_URL
-
-getprop github_HandlerURL [shortHkey]
-   put the long id of the target into hObject
-   put the hkey_Line [shortHkey] of hObject into hTableLine
-   if hTableLine is empty then return empty
-   --
-   put word 2 of hTableLine into hName
-   put word 3 of hTableLine + 1 into sLineNum
-   put word 4 of hTableLine + 1 into eLineNum
-   --
-   put github_GetHandlerURL (hObject, sLineNum, eLineNum) into githubURL 
-   return githubURL
-end github_HandlerURL
-
-getprop github_WikiPage
-   put the stack_Object of the target into stackObject
-   put github_CreateStackWikiPage (stackObject) into mdLines
-   return mdLines
-end github_WikiPage
-
-getprop github_RelativePath
-   put the stack_Object of the target into sObject
-   set the itemdelimiter to slash
-   put the number of items of the engine folder + 2 into sNum
-   get the filename of sObject
-   put item sNum  to -1 of it into relPath
-   return relPath
-end github_RelativePath
-
-
---> Github | URL
--
-function github_GetUrl stackName, pRepoName
-   put the effective filename of stack stackName into stackPath
-   put github_URLFromPath (stackPath, pRepoName) into githubURL
-   return githubURL
-end github_GetUrl
-
-function github_TransportURL shortFile, pRepoName
-   -- need to switch stacks for .lc scripts
-   -- https://github.com/LiveCodeWorld/lcw_Controllers
-   -- /blob/master/
-   -- controllers/ward.lc
-   
-   put github_GetRepoUrl (pRepoName) into githubURL
-   put "/lcw_Controllers/blob/master/controllers/" & shortFile into relPath
-   put relPath after githubURL
-   return githubURL
-end github_TransportURL
-
 function github_URLFromPath somePath, pRepoName
    -- https://github.com/LiveCodeWorld/lcw_Script
    -- /blob/master/
    -- libraries/lib_Help.livecodescript
    
    put env_GetRepoFolder() into repoFolder
-   put git_FindCheckoutFolder (somePath) into checkoutFolder
+   -- put git_FindCheckoutFolder (somePath) into checkoutFolder
+   put git_GetCheckoutFolder(somePath) into checkoutFolder
    if checkoutFolder begins with repoFolder is false then return empty
    
    set the itemdelimiter to slash
@@ -111,6 +118,11 @@ function github_URLFromPath somePath, pRepoName
    return githubURL
 end github_URLFromPath
 
+function github_ConstructRepoUrl pRepoName
+   if pRepoName is empty then put "LiveCodeWorld" into pRepoName
+   return "https://github.com/" & pRepoName
+end github_ConstructRepoUrl
+
 function github_GetRepoUrl pRepoName
    if pRepoName is empty then return "https://github.com/LiveCodeWorld"
    --
@@ -118,6 +130,68 @@ function github_GetRepoUrl pRepoName
    put github_ExtractHtmlUrl (repoArray) into githubURL
    return githubURL
 end github_GetRepoUrl
+
+
+--> Github | URL
+-
+function github_GetUrl stackName, pRepoName
+   put the effective filename of stack stackName into stackPath
+   put github_URLFromPath (stackPath, pRepoName) into githubURL
+   return githubURL
+end github_GetUrl
+
+function github_GetHandlerURL sObject, pStartLineNum, pEndLineNum
+   -- https://github.com/LiveCodeWorld/lcw_Help/blob/master/lcw_Help/controllers/Global_Hkey_Help_Menu.livecodescript#L100-L107
+   
+   -- https://github.com/LiveCodeWorld/lcw_Help/blob/master/controllers/Global_Hkey_Help_Menu.livecodescript#L100-L107
+   -- https://github.com/LiveCodeWorld/lcw_Help/blob/c12756523cebcb314f79d5eacc1c890a8f85dede/controllers/Global_Hkey_Help_Menu.livecodescript#L100-L107
+   
+   put the project_Name of sObject into projectName
+   put the github_RelativePath of sObject into relPath
+   
+   -- https://github.com/LiveCodeWorld/lcw_Help/blob/master/controllers/Global_Hkey_Help_Menu.livecodescript
+   -- https://github.com/LiveCodeWorld/blob/master/lcw_Help/controllers/Global_Hkey_Help_Menu.livecodescript#L100-L107
+   put merge ("https://github.com/LiveCodeWorld/[[projectName]]/blob/master/") & relPath into githubURL
+   if pStartLineNum is not empty then
+      put "#L" & pStartLineNum after githubURL
+      put "-L" & pEndLineNum after githubURL
+   end if
+   return githubURL
+end github_GetHandlerURL
+
+function github_TransportURL shortFile, pRepoName
+   -- need to switch stacks for .lc scripts
+   -- https://github.com/LiveCodeWorld/lcw_Controllers
+   -- /blob/master/
+   -- controllers/ward.lc
+   
+   put github_GetRepoUrl (pRepoName) into githubURL
+   put "/lcw_Controllers/blob/master/controllers/" & shortFile into relPath
+   put relPath after githubURL
+   return githubURL
+end github_TransportURL
+
+getprop github_RelativePath
+   -- realtive to project / git root
+   put the long id of the target into tObject
+   --
+   put the filename of tObject into sFile
+   put the project_Folder of tObject into projectFolder
+   -- put the git_CheckOutFolder
+   set the itemdelimiter to slash
+   put the number of items of projectFolder + 1 into sNum
+   put item sNum to -1 of sFile into relPath
+   return relPath
+end github_RelativePath
+
+
+--> Github | Props
+-
+getprop github_WikiPage
+   put the stack_Object of the target into stackObject
+   put github_CreateStackWikiPage (stackObject) into mdLines
+   return mdLines
+end github_WikiPage
 
 
 --> GitHub | Launch
@@ -265,19 +339,6 @@ function github_LivecodeWorldProjectExists projectName
    put projectName is among the lines of LocalArray ["lcwRepoNames"] into someBoolean
    return someBoolean
 end github_LivecodeWorldProjectExists
-
-function github_GetHandlerURL sObject, pStartLineNum, pEndLineNum
-   -- put "https://github.com/livecode/livecode-ide/blob/develop/" & relPath into githubURL
-   -- https://github.com/LiveCodeWorld/lcw_Script/blob/master/libraries/lib_Help.livecodescript
-   put the project_Name of sObject into projectName
-   put the github_RelativePath of sObject into relPath
-   put merge ("https://github.com/LiveCodeWorld/[[projectName]]/blob/master/") & relPath into githubURL
-   if pStartLineNum is not empty then
-      put "#L" & pStartLineNum after githubURL
-      put "-L" & pEndLineNum after githubURL
-   end if
-   return githubURL
-end github_GetHandlerURL
 
 function script_GetHandlerMarkdown tObject, relativePath
    put the revAvailableHandlers of tObject into handlerTable

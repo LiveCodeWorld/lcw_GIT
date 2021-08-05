@@ -43,13 +43,13 @@ end submenu_Dev
 --> Global | Git | Line | Stack | Log | Menu | Props
 -
 getprop stack_Hashs [mTarget]
-   put the stack_RelativeFile of mTarget into relativePath
-   return git_ReverseFileHashes (relativePath)
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_ReverseFileHashes (sFile)
 end stack_Hashs
 
 getprop back_Hashs [mTarget]
-   put the script_RelativeFile of mTarget into relativePath
-   return git_ReverseFileHashes (relativePath)
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_ReverseFileHashes (sFile)
 end back_Hashs
 
 getprop back_Nums
