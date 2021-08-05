@@ -53,7 +53,7 @@ getprop github_HandlerURL [shortHkey]
    -- uses "revAvailableHandlers"
    put the long id of the target into hObject
    --
-   _HkeyOffsets hObject, shortHkey, sLineNum, eLineNum
+   hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
    if the result is empty then return empty
    --
    put github_GetHandlerURL (hObject, sLineNum, eLineNum) into githubURL 
@@ -72,7 +72,7 @@ function github_GetPermalink hObject, repoName, pBackNum
    put item -1 of checkoutFolder into item 2 of repoBit
    --
    if shortHkey is not empty then
-      _HkeyOffsets hObject, shortHkey, sLineNum, eLineNum
+      hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
    end if
    --
    put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink

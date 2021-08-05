@@ -22,8 +22,9 @@ getprop menu_Target
    return sObject
 end menu_Target
 
-getprop menu_CheckTarget [mTarget]
-   pass menu_CheckTarget
+getprop menu_CheckTarget [sObject]
+   put env_ProjectIsActive ("lcw_GIT") into gitIsActive
+   return gitIsActive
 end menu_CheckTarget
 
 getprop disabled_LaunchGithub [sObject]
