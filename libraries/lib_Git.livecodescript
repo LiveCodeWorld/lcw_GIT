@@ -12,6 +12,22 @@ A library for working with GIT.
 It has not been tested on unix (should work fine), or Windows machines (beware of line ending issues).
 */
 
+--> Deps
+-
+command folder_SetEnclosingDefault someFile
+   put folder_GetEnclosing (someFile) into enclosingFolder
+   put the defaultFolder into oFolder
+   set the defaultFolder to enclosingFolder
+   return oFolder
+end folder_SetEnclosingDefault
+
+function folder_GetEnclosing someFile
+   put someFile into enclosingFolder
+   set the itemdelimiter to slash
+   delete item -1 of enclosingFolder
+   return enclosingFolder
+end folder_GetEnclosing
+
 
 --> Working On
 -
@@ -138,20 +154,6 @@ command git_ExecuteShell someShell, pGitRootFolder
    put shell_ExecuteAtRoot (someShell, pGitRootFolder, gitPath) into shellResult
    return word 1 to -1 of shellResult
 end git_ExecuteShell
-
-command folder_SetEnclosingDefault someFile
-   put folder_GetEnclosing (someFile) into enclosingFolder
-   put the defaultFolder into oFolder
-   set the defaultFolder to enclosingFolder
-   return oFolder
-end folder_SetEnclosingDefault
-
-function folder_GetEnclosing someFile
-   put someFile into enclosingFolder
-   set the itemdelimiter to slash
-   delete item -1 of enclosingFolder
-   return enclosingFolder
-end folder_GetEnclosing
 
 
 --> Git | add

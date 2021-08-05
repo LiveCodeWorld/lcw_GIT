@@ -15,46 +15,33 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
-getprop git_Permalink
-   --put "ff7d015687d68217135e51347097cb36ed0817fe" into commit
-   put "LiveCodeWorld" into repoName
+getprop github_WikiPage
+   put the stack_Object of the target into stackObject
+   put github_CreateStackWikiPage (stackObject) into mdLines
+   return mdLines
+end github_WikiPage
+
+getprop github_RelativePath
+   -- realtive to project / git root
+   put the long id of the target into tObject
    --
-   put the filename of the target into sFile
-   put git_GetCommitFileHash (sPath) into commitHash
-   git_SetRelative sFile, relativePath, checkoutFolder
-   -- put "libraries/lib_Help.livecodescript" into relativePath
-   --
+   put the filename of tObject into sFile
+   -- put the project_Folder of tObject into gitFolder
+   put the git_Folder of tObject into gitFolder
    set the itemdelimiter to slash
-   put repoName into repoBit
-   put item -1 of checkoutFolder into item 2 of repoBit
-   -- put "LiveCodeWorld/lcw_Help" into repoBit
-   
-   put github_GetPermalink (commitHash, repoBit, relativePath) into webPermalink
-   return webPermalink
-end git_Permalink
+   put the number of items of gitFolder + 1 into sNum
+   put item sNum to -1 of sFile into relPath
+   return relPath
+end github_RelativePath
 
-function github_GetPermalink commitHash, repoBit, relativePath
-   -- https://github.com/LiveCodeWorld/lcw_Help/blob/ff7d015687d68217135e51347097cb36ed0817fe/libraries/lib_Help.livecodescript#L419-L433
-   put "https://github.com" into base
-   
-   # Construct
-   -- put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
-   put merge ("[[base]]/[[repoBit]]/blob/[[commitHash]]/[[relativePath]]") into webPermalink
-   
-   # Add lines
-   _AddLineBit webPermalink, pStartLineNum, pEendLineNum
-   
-   return webPermalink
-end github_GetPermalink
 
-private command _AddLineBit @permalinkURL, pStartLineNum, pEendLineNum
-   if pStartLineNum is a number then
-      put "#L" & pStartLineNum after permalinkURL
-   end if
-   if pEendLineNum is a number then
-      put "-L" & pEendLineNum after permalinkURL
-   end if
-end _AddLineBit
+--> GitHub | Permalink
+-
+getprop github_Permalink [shortHkey]
+   put the long id of the target into hObject
+   put github_GetPermalink (hObject, "LiveCodeWorld", pBackNum)
+   return webPermalink
+end github_Permalink
 
 getprop github_URL
    put the stack_Name of the target into stackName
@@ -65,16 +52,54 @@ end github_URL
 getprop github_HandlerURL [shortHkey]
    -- uses "revAvailableHandlers"
    put the long id of the target into hObject
-   put the hkey_Line [shortHkey] of hObject into hTableLine
-   if hTableLine is empty then return empty
    --
-   put word 2 of hTableLine into hName
-   put word 3 of hTableLine + 1 into sLineNum
-   put word 4 of hTableLine + 1 into eLineNum
+   _HkeyOffsets hObject, shortHkey, sLineNum, eLineNum
+   if the result is empty then return empty
    --
    put github_GetHandlerURL (hObject, sLineNum, eLineNum) into githubURL 
    return githubURL
 end github_HandlerURL
+
+function github_GetPermalink hObject, repoName, pBackNum
+   if pBackNum is empty then put 1 into pBackNum
+   --
+   put the filename of hObject into sFile
+   put git_GetCommitFileHash (sFile, pBackNum) into commitHash
+   git_SetRelative sFile, relativePath, checkoutFolder
+   --
+   set the itemdelimiter to slash
+   put repoName into repoBit
+   put item -1 of checkoutFolder into item 2 of repoBit
+   --
+   if shortHkey is not empty then
+      _HkeyOffsets hObject, shortHkey, sLineNum, eLineNum
+   end if
+   --
+   put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink
+   return webPermalink
+end github_GetPermalink
+
+function github_ConstructPermalink commitHash, repoBit, relativePath, sLineNum, eLineNum
+   put "https://github.com" into base
+   
+   # Construct
+   -- put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
+   put merge ("[[base]]/[[repoBit]]/blob/[[commitHash]]/[[relativePath]]") into webPermalink
+   
+   # Add lines
+   _AddLineBit webPermalink, sLineNum, eLineNum
+   
+   return webPermalink
+end github_ConstructPermalink
+
+private command _AddLineBit @permalinkURL, pStartLineNum, pEndLineNum
+   if pStartLineNum > 0 then
+      put "#L" & pStartLineNum after permalinkURL
+   end if
+   if pEndLineNum > pStartLineNum then
+      put "-L" & pEndLineNum after permalinkURL
+   end if
+end _AddLineBit
 
 
 --> Launch
@@ -170,28 +195,6 @@ function github_TransportURL shortFile, pRepoName
    put relPath after githubURL
    return githubURL
 end github_TransportURL
-
-getprop github_RelativePath
-   -- realtive to project / git root
-   put the long id of the target into tObject
-   --
-   put the filename of tObject into sFile
-   put the project_Folder of tObject into projectFolder
-   -- put the git_CheckOutFolder
-   set the itemdelimiter to slash
-   put the number of items of projectFolder + 1 into sNum
-   put item sNum to -1 of sFile into relPath
-   return relPath
-end github_RelativePath
-
-
---> Github | Props
--
-getprop github_WikiPage
-   put the stack_Object of the target into stackObject
-   put github_CreateStackWikiPage (stackObject) into mdLines
-   return mdLines
-end github_WikiPage
 
 
 --> GitHub | Launch

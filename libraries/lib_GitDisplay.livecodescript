@@ -177,6 +177,13 @@ command display_GitStatus sObject
    return arrayView
 end display_GitStatus
 
+command display_GitProjectStatus projectName
+   put env_ConstructProjectFolder (projectName) into projectFolder
+   put git_GetCheckoutFolder (projectFolder) into gitCheckoutFolder
+   display_GitFolderStatus gitCheckoutFolder
+   return gitCheckoutFolder
+end display_GitProjectStatus
+
 command display_GitRefreshProjectName projectName
    -- works even if project is not loaded based on standard file names
    put env_ConstructHomePath (projectName) into homeStackPath

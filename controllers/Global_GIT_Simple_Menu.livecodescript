@@ -80,11 +80,7 @@ on menu_InitialiseGit projectName
 end menu_InitialiseGit
 
 on menu_GitStatus projectName
-   put env_ConstructProjectFolder (projectName) into projectFolder
-   --
-   put git_GetCheckoutFolder (projectFolder) into gitCheckoutFolder
-   --
-   display_GitFolderStatus gitCheckoutFolder
+   display_GitProjectStatus projectName
 end menu_GitStatus
 
 on menu_LaunchGithub projectName
