@@ -31,6 +31,25 @@ end folder_GetEnclosing
 
 --> Working On
 -
+command git_PushBranch gitFolder, pBranchName
+   if pBranchName is empty then
+      put git_CurrentBranchName (gitFolder) into pBranchName
+   end if
+   put "git push origin" && kwote (pBranchName) into someShell
+   put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
+   return shellResult
+end git_PushBranch
+
+function git_CurrentBranchName checkoutFolder
+   put git_ExecuteShellCommand ("git branch", checkoutFolder) into shellResult
+   repeat for each line someLine in shellResult
+      if word 1 of someLine = "*" then
+         return word 2 to -1 of someLine
+      end if
+   end repeat
+   return empty
+end git_CurrentBranchName
+
 function git_GetLastRevision relativePath, gitHashOrNum
    /*
    drdave: “ is shell substitution operator. Shell runs the command inside and pastes its stdout over it and then runs the whole command.
@@ -1195,16 +1214,6 @@ end git_StashArray
 
 --> GIT
 -
-function git_CurrentBranchName checkoutFolder
-   put git_ExecuteShellCommand ("git branch", checkoutFolder) into shellResult
-   repeat for each line someLine in shellResult
-      if word 1 of someLine = "*" then
-         return word 2 to -1 of someLine
-      end if
-   end repeat
-   return empty
-end git_CurrentBranchName
-
 function git_SearchRepository grepString
    put "git grep --text -i" && kwote (grepString, "'") into someShell
    put git_ExecuteShellCommand (someShell) into shellResult

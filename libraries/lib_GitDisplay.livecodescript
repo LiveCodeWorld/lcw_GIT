@@ -100,6 +100,26 @@ getprop git_StatusMenuTitle
 end git_StatusMenuTitle
 
 
+--> Display | GitHub
+-
+command ask_PushGithub sObject
+   put lcw_Ask ("Comment on these changes...") into someComment
+   --
+   put the git_Folder of sObject into gitFolder
+   github_UpdateAndPush gitFolder, someComment
+end ask_PushGithub
+
+command github_UpdateAndPush gitFolder, someComment
+   set the cursor to watch
+   --
+   stack_SaveEdited "all"
+   git_AddEverything gitFolder  
+   git_CommitChanges someComment, gitFolder
+   --
+   display_GitPushCurrentBranch gitFolder
+end github_UpdateAndPush
+
+
 --> Display | GIST
 -
 command display_Gists pHow
@@ -136,22 +156,15 @@ command display_GitProjectStatus projectName, pRepoFolder
 end display_GitProjectStatus
 
 command display_GitPushCurrentBranch gitFolder
-   put git_CurrentBranchName (gitFolder) into currentBranchName
-   put "git push origin" && kwote (currentBranchName) into someShell
-   --
-   put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
+   git_PushBranch gitFolder
+   put the result into shellResult
    --
    switch
       case shellResult begins with "Broken pipe"
+         lcw_Notify shellResult
          break
       case token 1 of shellResult = "Error"
-         /*
-         ERROR: Your account is disabled. Please see https://github.com/account/billing
-         fatal: Could not read from remote repository.
-         
-         Please make sure you have the correct access rights
-         and the repository exists.
-         */
+         -- ERROR: Your account is disabled. Please see https://github.com/account/billing
          put "Check billing" into btnText
          answer shellResult with btnText or "Cancel"
          if it is btnText then
@@ -161,8 +174,9 @@ command display_GitPushCurrentBranch gitFolder
       default
          lcw_Notify shellResult
          --
-         env_DeconstructProjectFolder gitFolder, projectName, repoFolder
-         display_GitRefreshProjectName projectName
+         -- env_DeconstructProjectFolder gitFolder, projectName, repoFolder
+         -- display_GitRefreshProjectName projectName
+         display_GitFolderStatus gitFolder
    end switch
 end display_GitPushCurrentBranch
 

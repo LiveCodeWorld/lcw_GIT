@@ -34,9 +34,21 @@ getprop disabled_LaunchGithub [sObject]
    end if
 end disabled_LaunchGithub
 
+getprop disabled_UpdateAndPush
+   -- should check it is on gitHub and needs saving?
+   return false
+end disabled_UpdateAndPush
+
 
 --> Global | GIT | Simple | Object | Menu
 -
+on menu_UpdateAndPush sObject
+   ask_PushGithub sObject
+end menu_UpdateAndPush
+
+on _
+end _
+
 on menu_LaunchGithub sObject
    put the github_URL of sObject into someURL
    launch url someURL
@@ -45,17 +57,3 @@ end menu_LaunchGithub
 on menu_DisplayGitStatus sObject
    display_GitStatus sObject
 end menu_DisplayGitStatus
-
-on menu_UpdateAndPush sObject
-   put lcw_Ask ("Comment on these changes...") into someComment
-   set the cursor to watch
-   --
-   stack_SaveEdited "all"
-   --
-   put the git_Folder of sObject into gitFolder
-   breakpoint
-   git_AddEverything gitFolder  
-   git_CommitChanges someComment, gitFolder
-   --
-   display_GitPushCurrentBranch gitFolder
-end menu_UpdateAndPush
