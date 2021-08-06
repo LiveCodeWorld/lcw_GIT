@@ -32,6 +32,19 @@ on saveStackRequest
    pass saveStackRequest -- or the stack won't be saved
 end saveStackRequest
 
+command ask_PushGithub sObject
+   put the git_Folder of sObject into gitFolder
+   if gitFolder is empty then return emppty
+   
+   put the project_Name of sObject into projectName
+   put merge ("Comment on the changes to project '[[projectName]]':") into someQuestion
+   put lcw_Ask (someQuestion) into someComment
+   --
+   github_UpdateAndPush gitFolder, someComment
+   put the result into displayView
+   return displayView
+end ask_PushGithub
+
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    put the displayed_GitCheckoutFolder of arrayView into gitCheckoutFolder
    text_AddTrailing gitCheckoutFolder, slash
@@ -100,26 +113,6 @@ getprop git_StatusMenuTitle
 end git_StatusMenuTitle
 
 
---> Display | GitHub
--
-command ask_PushGithub sObject
-   put lcw_Ask ("Comment on these changes...") into someComment
-   --
-   put the git_Folder of sObject into gitFolder
-   github_UpdateAndPush gitFolder, someComment
-end ask_PushGithub
-
-command github_UpdateAndPush gitFolder, someComment
-   set the cursor to watch
-   --
-   stack_SaveEdited "all"
-   git_AddEverything gitFolder  
-   git_CommitChanges someComment, gitFolder
-   --
-   display_GitPushCurrentBranch gitFolder
-end github_UpdateAndPush
-
-
 --> Display | GIST
 -
 command display_Gists pHow
@@ -162,21 +155,23 @@ command display_GitPushCurrentBranch gitFolder
    switch
       case shellResult begins with "Broken pipe"
          lcw_Notify shellResult
-         break
+         return shellResult
       case token 1 of shellResult = "Error"
          -- ERROR: Your account is disabled. Please see https://github.com/account/billing
          put "Check billing" into btnText
          answer shellResult with btnText or "Cancel"
          if it is btnText then
-            launch url "https://github.com/account/billing"
+            put "https://github.com/account/billing" into someURL
+            launch url someURL
+            return someURL
          end if
-         break
+         return empty
       default
          lcw_Notify shellResult
          --
-         -- env_DeconstructProjectFolder gitFolder, projectName, repoFolder
-         -- display_GitRefreshProjectName projectName
          display_GitFolderStatus gitFolder
+         put the result into displayView
+         return displayView
    end switch
 end display_GitPushCurrentBranch
 
@@ -240,8 +235,9 @@ command display_GitFolderStatus gitCheckoutFolder
    put git_FetchStatusTable (gitCheckoutFolder) into gitStatusTable
    --
    _DisplayGitStatusTable gitStatusTable, gitCheckoutFolder
-   put the result into arrayView
-   return arrayView
+   --
+   put the result into displayView
+   return displayView
 end display_GitFolderStatus
 
 

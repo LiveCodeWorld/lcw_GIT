@@ -14,8 +14,32 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Props
 -
-getprop git_IsClean
+getprop git_IsCommitted
+   set the cursor to watch
    stack_SaveEdited
+   --
+   put the git_StatusArray of the target into gitStatusArray
+   if gitStatusArray is eempty then return empty -- git not initalised
+   
+   put the git_RelativeFile of the target into relFile
+   put gitStatusArray ["Changes not staged for commit:"]["modified"] into modifiedArray
+   put gitStatusArray ["Changes not staged for commit:"]["new file"] into newFileArray
+   put gitStatusArray ["Untracked files:"]["files"] into untrackedArray
+   
+   switch
+      case relFile is among the keys of modifiedArray
+      case relFile is among the keys of newFileArray
+      case relFile is among the keys of untrackedArray
+         return false
+      default
+         return true
+   end switch
+end git_IsCommitted
+
+getprop git_IsClean
+   set the cursor to watch
+   stack_SaveEdited
+   --
    put the project_Name of the target into projectName
    put git_ProjectIsClean (projectName) into isClean
    return isClean
@@ -47,6 +71,19 @@ end folder_GetEnclosing
 
 --> Working On
 -
+command github_UpdateAndPush gitFolder, someComment
+   set the cursor to watch
+   --
+   stack_SaveEdited "all"
+   git_AddEverything gitFolder  
+   git_CommitChanges someComment, gitFolder
+   --
+   display_GitPushCurrentBranch gitFolder
+   --
+   put the result into displayView
+   return displayView
+end github_UpdateAndPush
+
 command git_PushBranch gitFolder, pBranchName
    if pBranchName is empty then
       put git_CurrentBranchName (gitFolder) into pBranchName
