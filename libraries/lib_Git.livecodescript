@@ -15,7 +15,8 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 --> Props
 -
 getprop git_IsClean
-   put the projeect_Name of the target into projectName
+   stack_SaveEdited
+   put the project_Name of the target into projectName
    put git_ProjectIsClean (projectName) into isClean
    return isClean
 end git_IsClean
