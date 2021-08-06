@@ -35,14 +35,8 @@ getprop github_RelativePath
 end github_RelativePath
 
 
---> GitHub | Permalink
+--> GitHub | URL
 -
-getprop github_Permalink [shortHkey]
-   put the long id of the target into hObject
-   put github_GetPermalink (hObject, "LiveCodeWorld", pBackNum)
-   return webPermalink
-end github_Permalink
-
 getprop github_URL
    put the stack_Name of the target into stackName
    put github_GetUrl (stackName) into githubURL
@@ -60,7 +54,59 @@ getprop github_HandlerURL [shortHkey]
    return githubURL
 end github_HandlerURL
 
-function github_GetPermalink hObject, repoName, pBackNum
+
+--> GitHub | Permalink | Raw
+-
+getprop github_RawPermalink [pBackNum]
+   put the long id of the target into hObject
+   put github_GetRawPermalink (hObject, pBackNum) into rawPermalink
+   return rawPermalink
+end github_RawPermalink
+
+function github_GetRawPermalink hObject, pBackNum, pRepoName
+   -- does not seem to work
+   -- taken from https://gist.github.com/larssono/1bdaad7e1fb72c0ccc2d7f6ae41862dc#file-getgitpermalink-py-L25
+   put "https://github.com" into base
+   _SetPermaLinkBits hObject, repoBit, commitHash, relativePath, pBackNum, pRepoName
+   --
+   put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
+   return rawPermalink
+end github_GetRawPermalink
+
+
+--> GitHub | Permalink
+-
+getprop github_Permalink [shortHkey]
+   put the long id of the target into hObject
+   put github_GetPermalink (hObject, shortHkey) into webPermalink
+   return webPermalink
+end github_Permalink
+
+function github_GetPermalink hObject, shortHkey, pBackNum, pRepoName
+   if shortHkey is not empty then
+      hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
+   end if
+   --
+   _SetPermaLinkBits hObject, repoBit, commitHash, relativePath, pBackNum, pRepoName
+   put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink
+   return webPermalink
+end github_GetPermalink
+
+function github_ConstructPermalink commit, repo, relPath, sLineNum, eLineNum   
+   put "https://github.com" into base
+   
+   # Construct
+   get "[[base]]/[[repo]]/blob/[[commit]]/[[relPath]]"
+   put merge (it) into webPermalink
+   
+   # Add lines
+   _AddLineBit webPermalink, sLineNum, eLineNum
+   
+   return webPermalink
+end github_ConstructPermalink
+
+private command _SetPermaLinkBits hObject, @repoBit, @commitHash, @relativePath, pBackNum, pRepoName
+   if pRepoName is empty then put "LiveCodeWorld" into pRepoName
    if pBackNum is empty then put 1 into pBackNum
    --
    put the filename of hObject into sFile
@@ -68,29 +114,9 @@ function github_GetPermalink hObject, repoName, pBackNum
    git_SetRelative sFile, relativePath, checkoutFolder
    --
    set the itemdelimiter to slash
-   put repoName into repoBit
+   put pRepoName into repoBit
    put item -1 of checkoutFolder into item 2 of repoBit
-   --
-   if shortHkey is not empty then
-      hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
-   end if
-   --
-   put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink
-   return webPermalink
-end github_GetPermalink
-
-function github_ConstructPermalink commitHash, repoBit, relativePath, sLineNum, eLineNum
-   put "https://github.com" into base
-   
-   # Construct
-   -- put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
-   put merge ("[[base]]/[[repoBit]]/blob/[[commitHash]]/[[relativePath]]") into webPermalink
-   
-   # Add lines
-   _AddLineBit webPermalink, sLineNum, eLineNum
-   
-   return webPermalink
-end github_ConstructPermalink
+end _SetPermaLinkBits
 
 private command _AddLineBit @permalinkURL, pStartLineNum, pEndLineNum
    if pStartLineNum > 0 then
@@ -108,6 +134,13 @@ command github_Launch repoName, pPath
    put github_URLFromPath (pPath, repoName) into githubURL
    launch url githubURL
 end github_Launch
+
+getprop github_ProjectURL [repoName]
+   put the project_Name of the target into projectName
+   if repoName is empty then put "LiveCodeWorld" into repoName
+   put merge ("https://github.com/[[repoName]]/[[projectName]]/") into someURL
+   return someURL
+end github_ProjectURL
 
 getprop github_LaunchURL
    put the stack_Name of the target into stackName

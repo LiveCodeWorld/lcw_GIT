@@ -12,6 +12,21 @@ A library for working with GIT.
 It has not been tested on unix (should work fine), or Windows machines (beware of line ending issues).
 */
 
+--> Props
+-
+getprop git_IsClean
+   put the projeect_Name of the target into projectName
+   put git_ProjectIsClean (projectName) into isClean
+   return isClean
+end git_IsClean
+
+getprop git_StatusArray
+   put the git_Folder of the target into gitFolder
+   put git_GetStatusArray (gitFolder) into gitStatusArray
+   return gitStatusArray
+end git_StatusArray
+
+
 --> Deps
 -
 command folder_SetEnclosingDefault someFile
@@ -233,12 +248,6 @@ end git_AddChanged
 
 --> Git | Status
 -
-getprop git_StatusArray
-   put the git_Folder of the target into gitFolder
-   put git_GetStatusArray (gitFolder) into gitStatusArray
-   return gitStatusArray
-end git_StatusArray
-
 function git_ProjectIsClean projectName
    put env_ConstructProjectFolder (projectName) into gitFolder
    put git_FetchStatusTable (gitFolder) into gitStatusTable
