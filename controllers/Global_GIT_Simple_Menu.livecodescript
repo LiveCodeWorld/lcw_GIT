@@ -18,12 +18,7 @@ local LocalArray
 
 --> Menu | Props
 -
-getprop menu_IsSimple
-   return true
-end menu_IsSimple
-
 getprop menu_Target [tObject]
-   -- only works for project display
    put the display_View of tObject into displayView
    put the title_Text of displayView into projectName
    --

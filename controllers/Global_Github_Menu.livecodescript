@@ -13,27 +13,6 @@ version: 0.1
 
 local LocalArray
 
-on menu_Init tObject
-   put the view_Object of tObject into displayView
-   put "LivecodeWorld" into LocalArray ["orgName"]
-   
-   put displayView into LocalArray ["displayView"]
-   put the title_Text of displayView into githubTeamName
-end menu_Init
-
-command stuff
-   --
-   put projectName into LocalArray ["projectName"]
-   put projectName & ".wiki" into wikiProjectName
-   put library_FetchProjectFolder (wikiProjectName) into wikiFolder
-   if there is a folder wikiFolder then
-      put wikiFolder into LocalArray ["wikiFolder"]
-   end if
-   
-   put github_LivecodeWorldProjectExists (projectName) into gitHubRepoExists
-   put gitHubRepoExists into LocalArray ["gitHubRepoExists"]
-end stuff
-
 
 --> Global | Github | Menu
 -
@@ -44,8 +23,8 @@ end menu_LaunchGithub
 on _
 end _
 
-on menu_Refresh indexView
-   put the title_Test of indexView into orgName
+on menu_Refresh
+   put git_LocalArray ("orgName") into orgName
    --
    display_GithubProjects orgName
 end menu_Refresh

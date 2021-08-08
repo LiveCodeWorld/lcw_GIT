@@ -34,8 +34,8 @@ local LocalArray
 --> Menu | Props
 -
 getprop menu_Target [tObject]
-   -- called first
-   pass menu_Target
+   put the display_View of tObject into displayView
+   return displayView
 end menu_Target
 
 getprop menu_CheckTarget [displayView]

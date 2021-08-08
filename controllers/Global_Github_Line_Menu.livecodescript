@@ -23,6 +23,14 @@ getprop menu_Target [tObject]
    return repoProjectName
 end menu_Target
 
+on _Init projectName
+   put projectName & ".wiki" into wikiProjectName
+   put library_FetchProjectFolder (wikiProjectName) into wikiFolder
+   if there is a folder wikiFolder then
+      put wikiFolder into LocalArray ["wikiFolder"]
+   end if
+end _Init
+
 getprop disabled_CreateGithubProjectPages [repoProjectName]
    put LocalArray ["wikiFolder"] into wikiFolder
    if there is a folder wikiFolder then
@@ -132,15 +140,14 @@ end submenu_Dev
 
 --> Dev | Menu
 -
-on menu_FindProjectView repoProjectName
+on _FindProjectView repoProjectName
    put display_FindView ("Model and Libraries", repoProjectName) into displayView
    --
    object_GoTo displayView
-end menu_FindProjectView
+end _FindProjectView
 
-on menu_DisplayGithubRepoArray repoProjectName
+on _DisplayGithubRepoArray repoProjectName
    put github_FetchRepoArray (repoProjectName) into repoArray
    --
    display_View repoArray, repoProjectName
-end menu_DisplayGithubRepoArray
-
+end _DisplayGithubRepoArray

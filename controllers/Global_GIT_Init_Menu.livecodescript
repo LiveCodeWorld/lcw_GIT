@@ -4,57 +4,23 @@
 license: GPLv3
 name: Global | GIT | Init | Menu
 type: controller
-version: 0.2
+version: 0.3
 
-/*This menu is for project displays. Typically an ndex_View with then menu_Target set to the project_Name.
-
-getprop disabled_GitStatus
-   if LocalArray ["gitIsActive"] is true then
-      return false
-   else
-      return "delete"
-   end if
-end disabled_GitStatus*/
-
+/*
+This menu is for project displays. Typically an ndex_View with then menu_Target set to the project_Name.
+*/
 
 --> Menu | Init
 -
-/* mTarget should already be set by set the menu_Target of displayView to projectName */
-
 local LocalArray
 
 getprop menu_Target [tObject]
-   put the view_Object of tObject into displayView
-   put "LivecodeWorld" into LocalArray ["orgName"]
-   
-   put displayView into LocalArray ["displayView"]
-   put the title_Text of displayView into projectName
-   put the displayed_GitCheckoutFolder of displayView into gitFolder
-   put gitFolder into projectFolder
-   --
-   put git_GetActiveStatus (gitFolder) into gitIsActive
-   put git_GetRemoteAddress (projectFolder) into gitRemoteAddress
-   --
-   put projectName into LocalArray ["projectName"]
-   put projectFolder into LocalArray ["projectFolder"] -- should be the same as gitFolder
-   put gitIsActive into LocalArray ["gitIsActive"]
-   put gitRemoteAddress into LocalArray ["gitRemoteAddress"]
-   put gitFolder into LocalArray ["gitFolder"]
-   
-   put projectName & ".wiki" into wikiProjectName
-   put library_FetchProjectFolder (wikiProjectName) into wikiFolder
-   if there is a folder wikiFolder then
-      put wikiFolder into LocalArray ["wikiFolder"]
-   end if
-   
-   put github_LivecodeWorldProjectExists (projectName) into gitHubRepoExists
-   put gitHubRepoExists into LocalArray ["gitHubRepoExists"]
-   --
+   put git_LocalArray ("projectName") into projectName
    return projectName
 end menu_Target
 
 getprop disabled_InitialiseGit
-   if LocalArray ["gitIsActive"] is true then
+   if git_LocalArray ("gitIsActive") is true then
       return "delete"
    else
       return false
@@ -62,51 +28,38 @@ getprop disabled_InitialiseGit
 end disabled_InitialiseGit
 
 getprop disabled_CreateGithubProject
-   if LocalArray ["gitIsActive"] is false then return true
-   if LocalArray ["gitHubRepoExists"] is true then
+   if git_LocalArray ("gitIsActive") is false then return true
+   if git_LocalArray ("gitHubRepoExists") is true then
       return true
    else
       return false
    end if
 end disabled_CreateGithubProject
 
-getprop disabled_FixRemote
-   if LocalArray ["gitHubRepoExists"] is false then return true
-   
-   put LocalArray ["gitRemoteAddress"] into gitRemoteAddress
-   if gitRemoteAddress is empty then
+getprop disabled_DisplayGithubInfo
+   if git_LocalArray ("gitHubRepoExists") then
       return false
    else
-      return "true"
+      return true
    end if
-end disabled_FixRemote
+end disabled_DisplayGithubInfo
 
 
 --> Events
 -
 on mouseDoubleUp_GitHub indexView, lcwRepoName
-   -- put LocalArray ["orgName"] into orgName
    github_Launch lcwRepoName
 end mouseDoubleUp_GitHub
 
 
 --> Global | GIT | Init | Menu
 -
-on menu_RefreshDisplay projectName
-   -- put LocalArray ["projectName"] into projectName
-   display_GitRefreshProjectName projectName
-end menu_RefreshDisplay
-
-on _
-end _
-
 on menu_InitialiseGit projectName
-   -- put LocalArray ["projectName"] into projectName
-   put LocalArray ["displayView"] into displayView
-   put LocalArray ["projectFolder"] into projectFolder
+   put git_LocalArray ("displayView") into displayView
+   put git_LocalArray ("projectFolder") into projectFolder
    --
    put merge ("Are you sure you want to initialise the project '[[projectName]]' with a git repo?") into someQuestion
-   dispatch "lcw_AnswerSheet" to displayView with someQuestion
+   lcw_Answer someQuestion, displayView, projectName
    --
    git_InitFolder projectFolder
    put the result into testGitRootFolder
@@ -120,9 +73,8 @@ on _
 end _
 
 on menu_CreateGithubProject projectName
-   -- put LocalArray ["projectName"] into projectName   -- "lcw_Git"
-   put LocalArray ["lcwRepoNames"] into lcwRepoNames
-   put LocalArray ["gitFolder"] into gitFolder
+   put git_LocalArray ("lcwRepoNames") into lcwRepoNames
+   put git_LocalArray ("gitFolder") into gitFolder
    
    -- let's check to see if GitHub repo exists (Should be disabled)
    if projectName is among the lines of lcwRepoNames then
@@ -157,84 +109,14 @@ on menu_LaunchGithubProject projectName
 end menu_LaunchGithubProject
 
 on menu_DisplayGithubOrg
-   put LocalArray ["orgName"] into orgName
+   put git_LocalArray ("orgName") into orgName
    --
    display_GithubProjects orgName
 end menu_DisplayGithubOrg
 
-on _
-end _
-
-on menu_FixRemote projectName
-   -- put LocalArray ["projectName"] into projectName
-   put LocalArray ["gitFolder"] into gitFolder
-   put LocalArray ["gitRemoteAddress"] into gitRemoteAddress
-   --
-   put merge ("git@github.com:LiveCodeWorld/[[projectName]].git") into newRemoteAddress
-   put lcw_Ask ("Enter git remote address...", newRemoteAddress)into gitRemoteAddress
-   --
-   -- git_SetRemoteOrigin gitRemoteAddress, gitFolder
-   git_AddFolderToRemote gitFolder, gitRemoteAddress
-   put the result into shellResult
-   --
-   put shellResult
-   --
-   return shellResult
-end menu_FixRemote
-
-on _
-end _
-
-on submenu_Settings
-   return "Global | GIT | Settings | Menu"
-end submenu_Settings
-
-on submenu_Dev
-   return "Dev | Menu"
-end submenu_Dev
-
-
---> Dev | Menu
--
-on menu_DisplayRemote
-   put LocalArray ["gitFolder"] into gitFolder
-   --
-   put git_GetRemoteAddress (gitFolder)
-end menu_DisplayRemote
-
-on _
-end _
-
 on menu_DisplayGithubInfo
-   put LocalArray ["gitRemoteAddress"] into gitRemoteAddress
+   put git_LocalArray ("gitRemoteAddress") into gitRemoteAddress
    --
    put github_FindRepoName (gitRemoteAddress) into repoName
    display_GitHubInfo repoName
 end menu_DisplayGithubInfo
-
-
---> Dev | Props
--
-getprop disabled_DisplayRemote
-   if LocalArray ["gitIsActive"] is true then
-      return false
-   else
-      return "delete"
-   end if
-end disabled_DisplayRemote
-
-getprop disabled_DisplayGithubInfo [projectName]
-   if LocalArray ["gitHubRepoExists"] then
-      return false
-   else
-      return true
-   end if
-end disabled_DisplayGithubInfo
-
-getprop disabled_DeleteInvisibleGitFolder
-   if LocalArray ["gitIsActive"] is true then
-      return false
-   else
-      return true
-   end if
-end disabled_DeleteInvisibleGitFolder
