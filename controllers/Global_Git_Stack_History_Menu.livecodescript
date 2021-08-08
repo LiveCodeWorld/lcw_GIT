@@ -21,7 +21,7 @@ on _
 end _
 
 on menu_SetLineMenu scriptObject
-   put menu_GetTargetObject() into tObject
+   put menu_GetTopTargetObject() into tObject
    put the index_View of tObject into indexView
    set the line_Menu of indexView to "Global | Git | Line | Stack | Log | Menu"
    --  edit the script of the behavior of indexView

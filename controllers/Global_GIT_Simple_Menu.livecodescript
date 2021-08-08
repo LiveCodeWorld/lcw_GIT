@@ -83,6 +83,11 @@ on menu_GitStatus projectName
    display_GitProjectStatus projectName
 end menu_GitStatus
 
+on menu_TrackCommmitAndPush projectName
+   put the name of stack projectName into homeStack
+   ask_PushGithub homeStack
+end menu_TrackCommmitAndPush
+
 on menu_LaunchGithub projectName
    put env_ConstructProjectFolder (projectName) into projectFolder
    put git_GetRemoteAddress (projectFolder) into remoteAddress

@@ -58,7 +58,7 @@ on menu_ShowHistory someFile
 end menu_ShowHistory
 
 on menu_CopyFileList
-   put menu_GetTargetObject() into treeField
+   put menu_GetTopTargetObject() into treeField
    put the tree_Children of treeField
 end menu_CopyFileList
 
@@ -120,7 +120,7 @@ end _
 
 on menu_ResetStaged someFile
    -- git reset -- frotz.c
-   put menu_GetTargetObject() into treeField
+   put menu_GetTopTargetObject() into treeField
    put the tree_SelectedIndex of treeField into someFile
    
    shell_BashParamEscape someFile
@@ -136,7 +136,7 @@ end menu_ResetStaged
 --> GIT | Line | Menu | Props
 -
 getprop disabled_AddFile
-   put menu_GetTargetObject() into treeField
+   put menu_GetTopTargetObject() into treeField
    if the tree_IsLeaf of treeField is true then
       return false
    else
@@ -145,7 +145,7 @@ getprop disabled_AddFile
 end disabled_AddFile
 
 getprop disabled_CopyFileList
-   put menu_GetTargetObject() into treeField
+   put menu_GetTopTargetObject() into treeField
    if the tree_IsLeaf of treeField is true then
       return true
    else
