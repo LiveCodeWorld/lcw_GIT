@@ -1,8 +1,9 @@
 ﻿script "Global | GIT | Status | Menu"
 --> MetaData
 -
+copyright: David Bovill
 license: GPLv3
-name: Global_GIT_Status_Menu
+name: Global | GIT | Status | Menu
 type: controllers
 version: 0.3
 

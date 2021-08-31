@@ -1,6 +1,7 @@
 ﻿script "Global | GIT | Settings | Menu"
 --> MetaData
 -
+copyright: David Bovill
 license: GPLv3
 name: Global | GIT | Settings | Menu
 type: controller
@@ -18,7 +19,7 @@ end menu_Target
 getprop documentation_Params
    return the hkey_CaseConditions ["M menu_Documentation"] of me
 end documentation_Params
-   
+
 getprop disabled_CreateLocalGitIgnoreFile [projectFolder]
    return git_LocalArray ("localIgnoreExists")
 end disabled_CreateLocalGitIgnoreFile
@@ -85,22 +86,17 @@ on menu_Documentation projectFolder, whichDoc
    end switch
 end menu_Documentation
 
-on menu_DisplayGitRemote projectFolder
-   put git_GetRemoteAddress (projectFolder) into remoteAddress
-   --
-   put remoteAddress
-   /*
-   put LocalArray ["projectName"] into projectName
-   put merge ("Edit the remote address for repo [[projectName]]...") into someQuestion
-   put lcw_Ask (someQuestion, remoteAddress)
-   */
-end menu_DisplayGitRemote
-
 on menu_DisplayGitConfig
    put git_ExecuteShellCommand("git config --list") into shellResult
    --
    display_Text shellResult, "git config --list"
 end menu_DisplayGitConfig
+
+on menu_DisplayLocalConfig projectFolder
+   put git_ExecuteShellCommand("git config --list") into shellResult
+   --
+   display_Tools shellResult, "Git Config", "GIT | Settings", "Git"
+end menu_DisplayLocalConfig
 
 on _
 end _
@@ -153,6 +149,17 @@ end submenu_Dev
 
 --> Dev | Menu
 -
+on _DisplayGitRemote projectFolder
+   put git_GetRemoteAddress (projectFolder) into remoteAddress
+   --
+   put remoteAddress
+   /*
+   put LocalArray ["projectName"] into projectName
+   put merge ("Edit the remote address for repo [[projectName]]...") into someQuestion
+   put lcw_Ask (someQuestion, remoteAddress)
+   */
+end _DisplayGitRemote
+
 on _ConfigureGitLogin
    put user_GetLogin() into userName
    put lcw_Ask("GIT user name...", userName) into userName

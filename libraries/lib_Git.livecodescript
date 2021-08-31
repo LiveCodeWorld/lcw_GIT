@@ -71,19 +71,6 @@ end folder_GetEnclosing
 
 --> Working On
 -
-command github_UpdateAndPush gitFolder, someComment
-   set the cursor to watch
-   --
-   stack_SaveEdited "all"
-   git_AddEverything gitFolder  
-   git_CommitChanges someComment, gitFolder
-   --
-   display_GitPushCurrentBranch gitFolder
-   --
-   put the result into displayView
-   return displayView
-end github_UpdateAndPush
-
 command git_PushBranch gitFolder, pBranchName
    if pBranchName is empty then
       put git_CurrentBranchName (gitFolder) into pBranchName

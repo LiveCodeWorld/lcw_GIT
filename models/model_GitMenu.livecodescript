@@ -56,61 +56,72 @@ end mDoubleUp_GitLog
 
 --> GIT | Menu | Model
 -
-command git_ClearMenuModel
-   delete variable LocalArray
-end git_ClearMenuModel
-
-command git_InitMenuModel displayView, projectName
-   put the displayed_GitCheckoutFolder of displayView into gitFolder
-   if there is not a folder gitFolder then
-      put the git_Folder of stack projectName into gitFolder
-   end if
-   put the displayed_ScriptObject of displayView into scriptObject
-   --
-   put env_ConstructProjectFolder (projectName) into projectFolder    
-   put git_LocalIgnoreFile (projectFolder) into ignoreFile
-   --
-   put displayView into LocalArray ["displayView"]
-   put projectName into LocalArray ["projectName"]
-   put scriptObject into LocalArray ["scriptObject"]
-   put gitFolder into LocalArray ["gitFolder"]
-   --
-   put ignoreFile into LocalArray ["ignoreFile"]
-   put there is a file ignoreFile into LocalArray ["localIgnoreExists"]
-   --
-   put git_GetActiveStatus (gitFolder) into LocalArray ["gitIsActive"]
-   put git_GetRemoteAddress (gitFolder) into LocalArray ["gitRemoteAddress"]
-   --
-   put "LivecodeWorld" into LocalArray ["orgName"]
-   put github_ListOrgRepos() into LocalArray ["lcwRepoNames"]
-   put github_LivecodeWorldProjectExists (projectName) into LocalArray ["gitHubRepoExists"]
-   
-   put _RemoteIsBad() into LocalArray ["_RemoteIsBad"]
-   put _GetStatusArray() into LocalArray ["statusArray"]
-end git_InitMenuModel
-
-private function _GetStatusArray
-   put LocalArray ["gitFolder"] into gitFolder
-   put git_GetStatusArray (gitFolder) into statusArray
-   return statusArray
-end _GetStatusArray
-
-private function _RemoteIsBad
-   put LocalArray ["gitFolder"] into gitFolder
-   put LocalArray ["gitRemoteAddress"] into remoteAddress
-   --
-   switch
-      case there is not a folder gitFolder
-         return true
-      case remoteAddress begins with "git@github.com:LiveCodeWorld/"
-         return false
-      default
-         -- remote address is not a LiveCodeWorld project
-         -- disabling for safety (this is not a generic git tool)
-         return true
-   end switch
-end _RemoteIsBad
-
 function git_LocalArray someKey
    return LocalArray [someKey]
 end git_LocalArray
+
+command git_ClearMenuModel dView
+   delete variable LocalArray
+   if exists (dView) is true then
+      set the git_SettingsModel of dView to empty
+   end if
+end git_ClearMenuModel
+
+
+--> GIT | Menu | Model
+-
+command git_InitMenuModel dView, projectName
+   git_InitGlobalModel projectName, dView
+   set the git_InitSettingsModel of dView to projectName
+end git_InitMenuModel
+
+command git_InitGlobalModel projectName
+   put github_ListOrgRepos() into LocalArray ["lcwRepoNames"]
+   put github_LivecodeWorldProjectExists (projectName) into LocalArray ["gitHubRepoExists"]
+end git_InitGlobalModel
+
+setprop git_InitSettingsModel projectName
+   put the display_View of the target into dView
+   if exists (dView) is false then return empty
+   --
+   put git_ConstructMenuModel (projectName, dView, pOrgName) into cArray
+   set the git_SettingsModel of dView to cArray
+   return cArray
+end git_InitSettingsModel
+
+function git_ConstructMenuModel projectName, dView, pOrgName
+   if exists (stack projectName) is false then return empty
+   -- put env_ConstructProjectFolder (projectName) into projectFolder 
+   
+   # Default Org
+   if pOrgName is empty then put "LivecodeWorld" into pOrgName
+   put pOrgName into cArray ["orgName"]
+   
+   # Assumes project projectName is open
+   put the project_Folder of stack projectName into gitFolder
+   put the git_Folder of stack projectName into gitFolder
+   -- put the displayed_GitCheckoutFolder of dView into gitFolder
+   
+   # Basics
+   put dView into cArray ["dView"]
+   put projectName into cArray ["projectName"]
+   put gitFolder into cArray ["gitFolder"]
+   
+   # Essentials
+   put git_LocalIgnoreFile (projectFolder) into ignoreFile
+   put git_GetRemoteAddress (gitFolder) into cArray ["gitRemoteAddress"]
+   put ignoreFile into cArray ["ignoreFile"]
+   put there is a file ignoreFile into cArray ["localIgnoreExists"]
+   
+   # Checked and not needed
+   -- put git_GetStatusArray (gitFolder) into cArray ["statusArray"]
+   -- put the displayed_ScriptObject of dView into cArray ["scriptObject"]
+   -- put git_GetActiveStatus (gitFolder) into cArray ["gitIsActive"]
+   -- put _RemoteIsBad() into cArray ["_RemoteIsBad"]
+   
+   return cArray
+end git_ConstructMenuModel
+
+
+--> Private
+-

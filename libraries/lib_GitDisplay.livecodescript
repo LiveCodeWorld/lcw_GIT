@@ -14,6 +14,36 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working on
 -
+command ask_PushGithub sObject, pQuestion, pForce
+   if pForce is not true AND the git_IsCommitted of sObject is true then return empty
+   put the git_Folder of sObject into gitFolder
+   if gitFolder is empty then
+      return "Error, cannot locate the git_Folder of:" && gitFolder
+   end if
+   if pQuestion is empty then
+      put the project_Name of sObject into projectName
+      put merge ("Comment on the changes to project '[[projectName]]':") into pQuestion
+   end if
+   
+   put lcw_Ask (pQuestion) into someComment
+   github_UpdateAndPush gitFolder, someComment
+   put the result into displayView
+   return displayView
+end ask_PushGithub
+
+command github_UpdateAndPush gitFolder, someComment
+   set the cursor to watch
+   --
+   stack_SaveEdited "all"
+   git_AddEverything gitFolder  
+   git_CommitChanges someComment, gitFolder
+   --
+   display_GitPushCurrentBranch gitFolder
+   --
+   put the result into displayView
+   return displayView
+end github_UpdateAndPush
+
 
 --> Events
 -
@@ -31,19 +61,6 @@ on saveStackRequest
    --
    pass saveStackRequest -- or the stack won't be saved
 end saveStackRequest
-
-command ask_PushGithub sObject
-   put the git_Folder of sObject into gitFolder
-   if gitFolder is empty then return emppty
-   
-   put the project_Name of sObject into projectName
-   put merge ("Comment on the changes to project '[[projectName]]':") into someQuestion
-   put lcw_Ask (someQuestion) into someComment
-   --
-   github_UpdateAndPush gitFolder, someComment
-   put the result into displayView
-   return displayView
-end ask_PushGithub
 
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    put the displayed_GitCheckoutFolder of arrayView into gitCheckoutFolder

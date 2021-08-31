@@ -83,6 +83,7 @@ getprop github_Permalink [shortHkey]
 end github_Permalink
 
 function github_GetPermalink hObject, shortHkey, pBackNum, pRepoName
+   local sLineNum, eLineNum
    if shortHkey is not empty then
       hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
    end if
