@@ -93,7 +93,7 @@ on menu_LocalProjects displayView
 end menu_LocalProjects
 
 on menu_GithubProjects displayView
-   put github_ListOrgRepos() into someIndex
+   put github_ListOrgProjects() into someIndex
    --
    _SetIndex someIndex, the params, displayView
 end menu_GithubProjects
@@ -113,23 +113,15 @@ on menu_MissingLocalRepos displayView
    _SetIndex someIndex, the params, displayView
 end menu_MissingLocalRepos
 
+on menu_ExportProjectArrays
+   env_ExportMenusAndStackFiles
+end menu_ExportProjectArrays
+
 on _
 end _
 
-on submenu_Dev
-   return "Dev | Menu"
-end submenu_Dev
-
-
---> Dev | Menu
--
 on menu_LocalProjects displayView
    put env_ListLocalProjects() into someIndex
    --
    _SetIndex someIndex, the params, displayView
 end menu_LocalProjects
-
-
-
---> Deps
--

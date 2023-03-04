@@ -44,20 +44,6 @@ end insert_Gist
 on _
 end _
 
-on menu_GitStatus scriptObject
-   put the git_Folder of scriptObject into checkoutFolder-- LocalArray ["checkoutFolder"]
-   put git_FetchStatusTable (checkoutFolder) into gitTable
-   put git_ConstructStatusOutline(gitTable, pTreeTitle, gitHelp) into someOutline
-   
-   put someOutline
-   
-   /*
-   display_Outline someOutline, "Git Status", "Global | GIT | Status | Menu"
-   put the result into treeView
-   set the displayed_GitCheckoutFolder of treeView to checkoutFolder
-   */
-end menu_GitStatus
-
 on menu_CompareWithLastCommit scriptObject
    put the exported_Script of scriptObject into exportedScript
    put the git_LastCommit of scriptObject into lastCommitedText

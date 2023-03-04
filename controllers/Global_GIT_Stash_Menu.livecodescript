@@ -35,14 +35,18 @@ git stash create*/
 -
 local LocalArray
 
-on menu_Init tObject
+getprop menu_Target [tObject]
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   
    put git_ListStashes() into LocalArray ["stashNames"]
    
-   put the display_View of tObject into displayView
-   put displayView into LocalArray ["displayView"]
-   put the displayed_ScriptObject of displayView into LocalArray ["scriptObject"]
-   put the displayed_GitCheckoutFolder of displayView into LocalArray ["gitCheckoutFolder"]
-end menu_Init
+   return dView
+end menu_Target
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
 
 
 --> Private

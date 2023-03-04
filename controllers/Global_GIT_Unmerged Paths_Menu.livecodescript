@@ -10,6 +10,35 @@ version: 0.1
 -
 local LocalArray
 
+--> Menu | Props
+-
+getprop menu_Target [tObject]
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   
+   put the current_BranchName of arrayView into LocalArray ["currentBranchName"]
+   put the other_BranchName of arrayView into LocalArray ["otherBranchName"]
+   
+   return dView
+end menu_Target
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
+
+private command refresh
+   put LocalArray ["displayView"] into displayView
+   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
+   display_GitFolderStatus gitCheckoutFolder, displayView
+end refresh
+
+private function _getFile arrayView
+   put the selected_Value of arrayView into relativeFile
+   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
+   put gitCheckoutFolder & relativeFile into someFile
+   return someFile
+end _getFile
+
 
 --> Global | GIT | Unmerged paths | Deleted by us | File | Menu
 -
@@ -152,35 +181,3 @@ on menu_Documentation arrayView, whichDoc
    end switch
    launch url someURL
 end menu_Documentation
-
-
---> Menu | Props
--
-on menu_Init tObject
-   put the array_View of tObject into arrayView
-   put arrayView into LocalArray ["displayView"]
-   
-   put the displayed_GitCheckoutFolder of arrayView into LocalArray ["gitCheckoutFolder"]
-   put the current_BranchName of arrayView into LocalArray ["currentBranchName"]
-   put the other_BranchName of arrayView into LocalArray ["otherBranchName"]
-end menu_Init
-
-getprop menu_Target [mTiltlePath]
-   pass menu_Target
-end menu_Target
-
-
---> Private
--
-private command refresh
-   put LocalArray ["displayView"] into displayView
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
-   display_GitFolderStatus gitCheckoutFolder, displayView
-end refresh
-
-private function _getFile arrayView
-   put the selected_Value of arrayView into relativeFile
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
-   put gitCheckoutFolder & relativeFile into someFile
-   return someFile
-end _getFile

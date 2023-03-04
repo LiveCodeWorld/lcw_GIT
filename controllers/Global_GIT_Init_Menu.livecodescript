@@ -15,12 +15,18 @@ This menu is for project displays. Typically an ndex_View with then menu_Target 
 local LocalArray
 
 getprop menu_Target [tObject]
-   put git_LocalArray ("projectName") into projectName
+   _InitLocalArray tObject
+   put LocalArray ["projectName"] into projectName
    return projectName
 end menu_Target
 
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+end _InitLocalArray
+
 getprop disabled_InitialiseGit
-   if git_LocalArray ("gitIsActive") is true then
+   if LocalArray ["gitFolder"] is not empty then
       return "delete"
    else
       return false
@@ -28,8 +34,8 @@ getprop disabled_InitialiseGit
 end disabled_InitialiseGit
 
 getprop disabled_CreateGithubProject
-   if git_LocalArray ("gitIsActive") is false then return true
-   if git_LocalArray ("gitHubRepoExists") is true then
+   if LocalArray ["gitFolder"] is empty then return true
+   if LocalArray ["gitHubRepoExists"] is true then
       return true
    else
       return false
@@ -37,7 +43,7 @@ getprop disabled_CreateGithubProject
 end disabled_CreateGithubProject
 
 getprop disabled_DisplayGithubInfo
-   if git_LocalArray ("gitHubRepoExists") then
+   if LocalArray ["gitHubRepoExists"] then
       return false
    else
       return true
@@ -55,8 +61,8 @@ end mouseDoubleUp_GitHub
 --> Global | GIT | Init | Menu
 -
 on menu_InitialiseGit projectName
-   put git_LocalArray ("displayView") into displayView
-   put git_LocalArray ("projectFolder") into projectFolder
+   put LocalArray ["displayView"] into displayView
+   put LocalArray ["projectFolder"] into projectFolder
    --
    put merge ("Are you sure you want to initialise the project '[[projectName]]' with a git repo?") into someQuestion
    lcw_Answer someQuestion, displayView, projectName
@@ -73,8 +79,9 @@ on _
 end _
 
 on menu_CreateGithubProject projectName
-   put git_LocalArray ("lcwRepoNames") into lcwRepoNames
-   put git_LocalArray ("gitFolder") into gitFolder
+   breakpoint
+   put LocalArray ["orgName"] into orgName
+   put github_ListOrgProjects (orgName) into lcwRepoNames
    
    -- let's check to see if GitHub repo exists (Should be disabled)
    if projectName is among the lines of lcwRepoNames then
@@ -109,13 +116,13 @@ on menu_LaunchGithubProject projectName
 end menu_LaunchGithubProject
 
 on menu_DisplayGithubOrg
-   put git_LocalArray ("orgName") into orgName
+   put LocalArray ["orgName"] into orgName
    --
    display_GithubProjects orgName
 end menu_DisplayGithubOrg
 
 on menu_DisplayGithubInfo
-   put git_LocalArray ("gitRemoteAddress") into gitRemoteAddress
+   put LocalArray ["gitRemoteAddress"] into gitRemoteAddress
    --
    put github_FindRepoName (gitRemoteAddress) into repoName
    display_GitHubInfo repoName

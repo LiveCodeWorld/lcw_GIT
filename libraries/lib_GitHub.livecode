@@ -304,17 +304,16 @@ end github_ConstructModuleUrl
 
 --> Github | Orgs
 -
-function github_ListOrgRepos pOrgName
-   put github_FetchOrgRepoAray (pOrgName) into githubOrgRepoAray
-   repeat for each key repoNum in githubOrgRepoAray
-      put githubOrgRepoAray [repoNum]["name"] into repoName
+function github_ListRepos orgRepoAray
+   repeat for each key repoNum in orgRepoAray
+      put orgRepoAray [repoNum]["name"] into repoName
       put repoName & CR after orgRepoNames
    end repeat
    delete char -1 of orgRepoNames
    sort orgRepoNames
    --
    return orgRepoNames
-end github_ListOrgRepos
+end github_ListRepos
 
 function github_ListMissingLocalRepos
    put env_ListLocalProjects() into localProjects
@@ -334,7 +333,7 @@ end github_ListMissingLocalRepos
 
 function github_ListNotOnGithub
    put env_ListLocalProjects() into localProjects
-   put github_ListOrgRepos () into repoProjectNames
+   put github_ListOrgProjects () into repoProjectNames
    --
    set the wholematches to true
    repeat for each line projectName in localProjects
@@ -369,13 +368,6 @@ function github_CreateStackWikiPage stackObject
    put merge (mkTemplate) into wikiMarkdown
    return wikiMarkdown
 end github_CreateStackWikiPage
-
-function github_LivecodeWorldProjectExists projectName
-   put github_ListOrgRepos() into lcwRepoNames
-   put lcwRepoNames into LocalArray ["lcwRepoNames"]
-   put projectName is among the lines of LocalArray ["lcwRepoNames"] into someBoolean
-   return someBoolean
-end github_LivecodeWorldProjectExists
 
 function script_GetHandlerMarkdown tObject, relativePath
    put the revAvailableHandlers of tObject into handlerTable
@@ -510,6 +502,21 @@ function github_ListOrgIssues someOrg
    put github_RestGet (orgBit) into someJSON
    return someJSON
 end github_ListOrgIssues
+
+
+--> GitHub | Orgs
+-
+function github_ListMyOrgsData
+   put github_RestGet ("/user/orgs") into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_ListMyOrgsData
+
+function github_ListOrgArray
+   put github_RestGet ("organizations") into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_ListOrgArray
 
 
 --> GitHub | Repos

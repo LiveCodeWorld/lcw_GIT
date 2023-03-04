@@ -41,7 +41,7 @@ getprop disabled_CreateGithubProjectPages [repoProjectName]
 end disabled_CreateGithubProjectPages
 
 getprop disabled_AddProjectWiki [repoProjectName]
-   if LocalArray ["gitHubRepoExists"] is false then return "true"
+   if github_LivecodeWorldProjectExists is false then return "true"
    
    put LocalArray ["wikiFolder"] into wikiFolder
    if there is a folder wikiFolder then

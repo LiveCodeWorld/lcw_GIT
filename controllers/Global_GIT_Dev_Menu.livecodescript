@@ -18,9 +18,15 @@ local LocalArray
 --> Menu | Props
 -
 getprop menu_Target [tObject]
-   put git_LocalArray ("gitFolder") into gitFolder
-   return gitFolder
+   _InitLocalArray tObject
+   return LocalArray ["gitFolder"]
 end menu_Target
+
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   return dView
+end _InitLocalArray
 
 getprop disabled_Branch [gitFolder]
    if there is a folder gitFolder then

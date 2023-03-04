@@ -15,38 +15,45 @@ local LocalArray
 --> Menu | Props
 -
 getprop menu_Target [tObject]
-   get the hilited_Element of tObject
-   put item 1 of it into LocalArray ["topKey"]
-   --
-   put git_LocalArray ("gitFolder") into gitFolder
-   return gitFolder
+   _InitLocalArray tObject
+   return LocalArray ["gitFolder"]
 end menu_Target
 
 
 --> Private
 -
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   return dView
+end _InitLocalArray
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
+
 private command _RefreshGitStatus
-   put git_LocalArray ("displayView") into displayView
-   put git_LocalArray ("gitFolder") into gitFolder
+   put _LocalValue ("displayView") into displayView
+   put _LocalValue ("gitFolder") into gitFolder
    display_GitFolderStatus gitFolder, displayView
 end _RefreshGitStatus
 
 private function _GetFile
-   put git_LocalArray ("displayView") into displayView
+   put _LocalValue ("displayView") into displayView
    put the selected_Value of displayView into relativeFile
-   put git_LocalArray ("gitFolder") into gitFolder
+   put _LocalValue ("gitFolder") into gitFolder
    put gitFolder & relativeFile into someFile
    return someFile
 end _GetFile
 
 private function _ExecuteGit someShell
-   put git_LocalArray ("gitFolder") into gitFolder
+   put _LocalValue ("gitFolder") into gitFolder
    put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
    return shellResult
 end _ExecuteGit
 
 private function _GetCheckoutFolder
-   put git_LocalArray ("gitFolder") into gitFolder
+   put _LocalValue ("gitFolder") into gitFolder
    if there is not a folder gitFolder then return empty
    return gitFolder
 end _getCheckoutFolder
@@ -241,7 +248,7 @@ on menu_SwitchLocalBranch gitFolder, localBranchName
    -- http://stackoverflow.com/questions/5531362/why-git-keeps-showing-my-changes-when-i-switch-branches-modified-added-deleted
    */
    
-   put git_LocalArray ("displayView") into displayView
+   put _LocalValue ("displayView") into displayView
    lcw_Answer "Sure you want to switch to branch '[[localBranchName]]'?", displayView, localBranchName
    
    put stack_ListEditedNames() into editedStacks
@@ -328,27 +335,7 @@ on _
 end _
 
 on menu_DiffLocalBranch gitFolder, localBranchName
-   put "git diff" into someShell
-   -- put space & "--git-diff-index" after someShell
-   put space & "--raw" after someShell
-   
-   put git_CurrentBranchName (gitFolder) into currentBranchName
-   shell_BashParamEscape currentBranchName
-   shell_BashParamEscape localBranchName
-   put space & currentBranchName & ".." & localBranchName after someShell
-   
-   put _executeGit (someShell)  into rawDiff
-   put git_ParseRawDiff (rawDiff) into dataArray
-   
-   display_Array dataArray, someShell, "Global | Git | Diff | Raw | Menu", "Global | Git | Diff | Raw | Line | Menu"
-   put the result into arrayView
-   set the displayed_GitCheckoutFolder of arrayView to gitFolder
-   set the current_BranchName of arrayView to currentBranchName
-   set the other_BranchName of arrayView to localBranchName
-   
-   -- display_Table dataArray, someShell, true, true, true, "status,srcPath,srcHash,dstHash,srcMode,dstMode,dstPath", "status,srcPath,srcHash,dstHash"
-   -- put the result into tableView
-   -- set the table_BodyTitle of tableView to "Global | Git | Diff | Raw | Menu"
+   display_GitBranchDiff gitFolder, localBranchName
 end menu_DiffLocalBranch
 
 on _

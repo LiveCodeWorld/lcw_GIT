@@ -62,10 +62,15 @@ on saveStackRequest
    pass saveStackRequest -- or the stack won't be saved
 end saveStackRequest
 
+put the displayed_GitSettings of displayView to projectName
+
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
-   put the displayed_GitCheckoutFolder of arrayView into gitCheckoutFolder
-   text_AddTrailing gitCheckoutFolder, slash
-   put gitCheckoutFolder & shortFileOrFolder into fileOrFolder
+   put the git_SettingsModel of arrayView into cArray
+   put cArray ["gitFolder"] into gitFolder
+   breakpoint
+   
+   text_AddTrailing gitFolder, slash
+   put gitFolder & shortFileOrFolder into fileOrFolder
    
    switch
       case there is a stack fileOrFolder
@@ -130,6 +135,59 @@ getprop git_StatusMenuTitle
 end git_StatusMenuTitle
 
 
+--> Display | Branch
+-
+command display_GitBranchDiff gitFolder, localBranchName
+   put "git diff" into someShell
+   -- put space & "--git-diff-index" after someShell
+   put space & "--raw" after someShell
+   
+   put git_CurrentBranchName (gitFolder) into currentBranchName
+   shell_BashParamEscape currentBranchName
+   shell_BashParamEscape localBranchName
+   put space & currentBranchName & ".." & localBranchName after someShell
+   
+   put _executeGit (someShell)  into rawDiff
+   put git_ParseRawDiff (rawDiff) into dataArray
+   
+   display_Array dataArray, someShell, "Global | Git | Diff | Raw | Menu", "Global | Git | Diff | Raw | Line | Menu"
+   put the result into dView
+   --
+   set the itemdelimiter to slash
+   put item -1 of gitFolder into projectName
+   set the git_InitSettingsModel of dView to projectName
+   
+   set the current_BranchName of dView to currentBranchName
+   set the other_BranchName of dView to localBranchName
+   
+   -- display_Table dataArray, someShell, true, true, true, "status,srcPath,srcHash,dstHash,srcMode,dstMode,dstPath", "status,srcPath,srcHash,dstHash"
+   -- put the result into tableView
+   -- set the table_BodyTitle of tableView to "Global | Git | Diff | Raw | Menu"
+   return dView
+end display_GitBranchDiff
+
+command display_GitPullResult shellResult, someShell
+   # Display
+   display_Lines shellResult, someShell
+   put the result into dView
+   set the tool_Menus of dView to "Git | Pull"
+   
+   # Init Menu model
+   set the itemdelimiter to slash
+   put item -1 of gitFolder into projectName
+   set the git_InitSettingsModel of dView to projectName
+   
+   set the displayed_GitBranch of dView to currentBranchName
+   _RefreshGitStatus
+   /*
+   stack_RevertLoaded
+   put the result into displayView
+   set the menu_Title of displayView to "Global | Git | Pull | Menu"
+   */
+   return  dView
+end display_GitPullResult
+
+
 --> Display | GIST
 -
 command display_Gists pHow
@@ -161,8 +219,8 @@ command display_GitProjectStatus projectName, pRepoFolder
    end if
    --
    display_GitFolderStatus gitFolder
-   put the result into arrayView
-   return arrayView
+   put the result into dView
+   return dView
 end display_GitProjectStatus
 
 command display_GitPushCurrentBranch gitFolder
@@ -196,18 +254,18 @@ end display_GitPushCurrentBranch
 --> Display | GIT
 -
 command display_GitStatus sObject
-   put the git_Folder of sObject into gitCheckoutFolder
+   put the git_Folder of sObject into gitFolder
    --
-   display_GitFolderStatus gitCheckoutFolder
+   display_GitFolderStatus gitFolder
    put the result into arrayView
    return arrayView
 end display_GitStatus
 
 command display_GitProjectStatus projectName
    put env_ConstructProjectFolder (projectName) into projectFolder
-   put git_GetCheckoutFolder (projectFolder) into gitCheckoutFolder
-   display_GitFolderStatus gitCheckoutFolder
-   return gitCheckoutFolder
+   put git_GetCheckoutFolder (projectFolder) into gitFolder
+   display_GitFolderStatus gitFolder
+   return gitFolder
 end display_GitProjectStatus
 
 command display_GitRefreshProjectName projectName
@@ -219,13 +277,13 @@ command display_GitRefreshProjectName projectName
       case exists (gitDisplayView) is false
          return "Error, there is no 'Git Staus' display for project '[[asdf]]'. Doing nothing."
       case there is a stack projectName
-         put the git_Folder of stack projectName into gitCheckoutFolder
-         display_GitFolderStatus gitCheckoutFolder
+         put the git_Folder of stack projectName into gitFolder
+         display_GitFolderStatus gitFolder
          put the result into displayView
          return displayView
       case there is a stack homeStackPath
-         put git_GetCheckoutFolder (homeStackPath) into gitCheckoutFolder
-         display_GitFolderStatus gitCheckoutFolder
+         put git_GetCheckoutFolder (homeStackPath) into gitFolder
+         display_GitFolderStatus gitFolder
          put the result into displayView
          return displayView
       default
@@ -247,13 +305,49 @@ command display_GitProjectStatus projectName
    return displayView
 end display_GitProjectStatus
 
-command display_GitFolderStatus gitCheckoutFolder
-   if there is not a folder gitCheckoutFolder then return empty
-   put git_FetchStatusTable (gitCheckoutFolder) into gitStatusTable
+command display_GitFolderStatus gitFolder
+   if there is not a folder gitFolder then return empty
+   put git_FetchStatusTable (gitFolder) into gitStatusTable
+   
+   # Check
+   set the itemdelimiter to ":"
+   if item 1 of gitStatusTable = "fatal" then
+      -- fatal: Not a git repository (or any of the parent directories): .git
+      answer warning gitStatusTable
+      return empty
+   end if
+   
+   # Find an existing displayView
+   set the itemdelimiter to slash
+   put item -1 of gitFolder into gitShortFolder
+   put display_FindView ("Git Status", gitShortFolder) into displayView
+   set the itemdelimiter to comma
+   
+   put git_ConstructStatusArray (gitStatusTable) into statusArray
+   array_StripEmptyKeys statusArray
+   
+   if exists (displayView) then
+      set the displayed_Array of displayView to statusArray
+   else
+      display_Array statusArray, gitShortFolder, "GIT Status"
+      put the result into displayView
+      set the title_Menu of displayView to "Global | GIT | Status | Menu"
+      set the line_Menu of displayView to "Global | GIT | Line | File | Menu"
+      set the mouse_DoubleUp ["me"] of displayView to "mDoubleUp_DisplayGitFile"
+      
+      # Experimental - sets the script of the displayView's card
+      put the script of displayView into oScript
+      put _DisplayGitStatusScript() into someScript
+      put oScript & CR & CR & someScript into newScript
+      set the script of displayView to newScript
+   end if
+   
+   # Set display Menu Model
+   -- git_InitGlobalModel -- should happen when project is loaded
+   set the itemdelimiter to slash
+   put item -1 of gitFolder into projectName
+   set the git_InitSettingsModel of displayView to projectName
    --
-   _DisplayGitStatusTable gitStatusTable, gitCheckoutFolder
-   --
-   put the result into displayView
    return displayView
 end display_GitFolderStatus
 
@@ -349,7 +443,7 @@ command display_StackHistory someObject
    
    put the stack_Object of someObject into stackObject
    put the filename of stackObject into stackPath
-   put the git_Folder of someObject into gitCheckoutFolder
+   put the git_Folder of someObject into gitFolder
    
    put git_GetFileLog (stackPath) into simpleLog
    git_ProcessSimpleLogLines simpleLog, logArray, orderedCommentLines
@@ -360,23 +454,26 @@ command display_StackHistory someObject
    
    -- display_Array logArray, someTitle, "Global | Git | Stack | History | Menu", "Global | Git | Line | Stack | Log | Menu"
    display_Index orderedCommentLines, someTitle, "Global | Git | Stack | History | Menu", "Global | Git | Line | Stack | Log | Menu"
-   put the result into indexView
+   put the result into displayView
    
-   set the log_Array of indexView to logArray
-   set the displayed_Object of indexView to stackObject
-   set the displayed_File of indexView to stackPath
-   set the displayed_GitCheckoutFolder of indexView to gitCheckoutFolder
+   set the log_Array of displayView to logArray
+   set the displayed_Object of displayView to stackObject
+   set the displayed_File of displayView to stackPath
    
-   return treeView
+   set the itemdelimiter to slash
+   put item -1 of gitFolder into projectName
+   set the git_InitSettingsModel of displayView to projectName
+   
+   return displayView
 end display_StackHistory
 
 
 --> Git | Display | Old
 -
-command git_DisplayStatusLines gitCheckoutFolder
-   put git_FetchStatusTable (gitCheckoutFolder) into gitStatusTable
+command git_DisplayStatusLines gitFolder
+   put git_FetchStatusTable (gitFolder) into gitStatusTable
    set the itemdelimiter to slash
-   put item -1 of gitCheckoutFolder into gitShortFolder
+   put item -1 of gitFolder into gitShortFolder
    put gitShortFolder & comma & "GIT Status" into someTitle
    display_Index gitStatusTable, someTitle, "Global | GIT | Status | Menu"
    return the result
@@ -609,46 +706,6 @@ private function _GitTreeView
    put the module_View of stack "View|Tree|GIT" into gitTreeView
    return gitTreeView
 end _GitTreeView
-
-command _DisplayGitStatusTable gitStatusTable, gitCheckoutFolder  
-   -- put git_GetCheckoutFolder (gitCheckoutFolder) into gitCheckoutFolder -- can be called from anywhere inside a git repo 
-   
-   set the itemdelimiter to ":"
-   if item 1 of gitStatusTable = "fatal" then
-      -- fatal: Not a git repository (or any of the parent directories): .git
-      answer warning gitStatusTable
-      return empty
-   end if
-   
-   -- let's find an existing displayView if it exists
-   set the itemdelimiter to slash
-   put item -1 of gitCheckoutFolder into gitShortFolder
-   put display_FindView ("Git Status", gitShortFolder) into displayView
-   set the itemdelimiter to comma
-   
-   -- see "git_GetStatusArray (gitCheckoutFolder)"
-   put git_ConstructStatusArray (gitStatusTable) into statusArray
-   array_StripEmptyKeys statusArray
-   
-   if exists (displayView) then
-      set the displayed_Array of displayView to statusArray
-   else
-      display_Array statusArray, gitShortFolder, "GIT Status"
-      put the result into displayView
-      set the title_Menu of displayView to "Global | GIT | Status | Menu"
-      set the line_Menu of displayView to "Global | GIT | Line | File | Menu"
-      set the mouse_DoubleUp ["me"] of displayView to "mDoubleUp_DisplayGitFile"
-      --
-      set the displayed_GitCheckoutFolder of displayView to gitCheckoutFolder
-      
-      -- experimental here we set the script of the displayView's card
-      put the script of displayView into oScript
-      put _DisplayGitStatusScript() into someScript
-      put oScript & CR & CR & someScript into newScript
-      set the script of displayView to newScript
-   end if
-   return displayView
-end _DisplayGitStatusTable
 
 function _DisplayGitStatusScript
    put "getprop menu_Title" into someScript

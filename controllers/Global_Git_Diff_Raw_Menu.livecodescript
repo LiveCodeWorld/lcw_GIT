@@ -14,56 +14,62 @@ local LocalArray
 
 --> Menu | Props
 -
-on menu_Init tObject
-   put the array_View of tObject into arrayView
-   put the displayed_GitCheckoutFolder of arrayView into LocalArray ["gitCheckoutFolder"]
+getprop menu_Target [tObject]
+   _InitLocalArray tObject
+   return LocalArray ["displayView"]
+end menu_Target
+
+
+--> Private
+-
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
    put the current_BranchName of arrayView into LocalArray ["currentBranchName"]
    put the other_BranchName of arrayView into LocalArray ["otherBranchName"]
-end menu_Init
+   return dView
+end _InitLocalArray
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
 
 
 --> Global | Git | Diff | Raw | Line | Menu
 -
-on menu_RevertStack arrayView
-   put item 1 of the hilited_Element of arrayView into thisBranchRelativePath
-
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
-   put LocalArray ["otherBranchName"] into otherBranchName
-
-   put gitCheckoutFolder & thisBranchRelativePath into thisBranchStackPath
-
-end menu_RevertStack
+on menu_Test
+   breakpoint
+end menu_Test
 
 
 --> Global | Git | Diff | Raw | Menu
 -
 on menu_RevertOpenStacks arrayView
-   put the displayed_GitCheckoutFolder of arrayView into gitCheckoutFolder
-   -- put the openstacks into openStackNames
+   put LocalArray ["gitFolder"] into gitFolder
    put revLoadedStacks("all") into loadedStackNames
-
+   
    put the displayed_Array of arrayView into displayedArray
    repeat for each key relativePath in displayedArray
-      put gitCheckoutFolder & relativePath into thisBranchFile
-
+      put gitFolder & relativePath into thisBranchFile
+      
       put displayedArray [relativePath]["dstPath"] into otherBranchRelativeFile
       if otherBranchRelativeFile is empty then
          put thisBranchFile into otherBranchFile
       else
-         put gitCheckoutFolder & otherBranchRelativeFile into otherBranchFile
+         put gitFolder & otherBranchRelativeFile into otherBranchFile
       end if
-
+      
       if there is a stack thisBranchFile then
          put the short name of stack thisBranchFile into thisStackName
          if thisStackName is among the lines of loadedStackNames then
             put thisStackName & CR after stackNamesToRevert
-
+            
             breakpoint
             revert stack thisStackName
          end if
       end if
    end repeat
    delete char -1 of stackNamesToRevert
-
+   
    put stackNamesToRevert
 end menu_RevertOpenStacks

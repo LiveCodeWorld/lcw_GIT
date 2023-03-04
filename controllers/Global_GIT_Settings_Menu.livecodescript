@@ -13,25 +13,36 @@ version: 0.2
 local LocalArray
 
 getprop menu_Target [tObject]
-   return git_LocalArray ("projectFolder")
+   _InitLocalArray tObject
+   return LocalArray ["gitFolder"]
 end menu_Target
+
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   return dView
+end _InitLocalArray
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
 
 getprop documentation_Params
    return the hkey_CaseConditions ["M menu_Documentation"] of me
 end documentation_Params
 
 getprop disabled_CreateLocalGitIgnoreFile [projectFolder]
-   return git_LocalArray ("localIgnoreExists")
+   return _LocalValue ("localIgnoreExists")
 end disabled_CreateLocalGitIgnoreFile
 
 getprop disabled_EditLocalGitIgnoreFile [projectFolder]
-   return git_LocalArray ("localIgnoreExists") is false
+   return _LocalValue ("localIgnoreExists") is false
 end disabled_EditLocalGitIgnoreFile
 
 getprop disabled_CreateGlobalGitIgnoreFile [projectFolder]
    put git_GlobalIgnoreFile (projectFolder) into ignoreFile
-   put there is not a file ignoreFile into noGlobalIgnore
-   return noGlobalIgnore
+   put there is a file ignoreFile into gIgnoreExists
+   return gIgnoreExists
 end disabled_CreateGlobalGitIgnoreFile
 
 getprop overwriteIgnoreFile_Params [projectFolder]
@@ -43,9 +54,9 @@ getprop testIgnoreFile_Params [projectFolder]
 end testIgnoreFile_Params
 
 getprop disabled_FixRemote
-   if git_LocalArray ("gitHubRepoExists") is false then return true
+   if _LocalValue ("gitHubRepoExists") is false then return true
    
-   put git_LocalArray ("gitRemoteAddress") into gitRemoteAddress
+   put _LocalValue ("gitRemoteAddress") into gitRemoteAddress
    if gitRemoteAddress is empty then
       return false
    else
@@ -54,12 +65,16 @@ getprop disabled_FixRemote
 end disabled_FixRemote
 
 getprop disabled_DisplayRemote
-   if git_LocalArray ("gitIsActive") is true then
+   if _LocalValue ("gitFolder") is not empty then
       return false
    else
       return "delete"
    end if
 end disabled_DisplayRemote
+
+getprop setRemote_Params
+   return github_ListOrgs()
+end setRemote_Params
 
 function text_LineEndingPlatform someText
    if someText contains CRLF then
@@ -86,17 +101,17 @@ on menu_Documentation projectFolder, whichDoc
    end switch
 end menu_Documentation
 
-on menu_DisplayGitConfig
-   put git_ExecuteShellCommand("git config --list") into shellResult
-   --
-   display_Text shellResult, "git config --list"
-end menu_DisplayGitConfig
+on menu_SetRemote projectFolder, orgNamme
+   breakpoint
+end menu_SetRemote
 
 on menu_DisplayLocalConfig projectFolder
-   put git_ExecuteShellCommand("git config --list") into shellResult
-   --
-   display_Tools shellResult, "Git Config", "GIT | Settings", "Git"
+   display_GitConfig projectFolder
 end menu_DisplayLocalConfig
+
+on menu_DisplayGlobalConfig
+   display_GitConfig
+end menu_DisplayGlobalConfig
 
 on _
 end _
@@ -198,9 +213,9 @@ end _AddGitIgnore
 
 on _FixRemote gitFolder
    breakpoint
-   put git_LocalArray ("projectName") into projectName
-   put git_LocalArray ("gitFolder") into gitFolder
-   put git_LocalArray ("gitRemoteAddress") into gitRemoteAddress
+   put _LocalValue ("projectName") into projectName
+   put _LocalValue ("gitFolder") into gitFolder
+   put _LocalValue ("gitRemoteAddress") into gitRemoteAddress
    --
    put merge ("git@github.com:LiveCodeWorld/[[projectName]].git") into newRemoteAddress
    put lcw_Ask ("Enter git remote address...", newRemoteAddress)into gitRemoteAddress
@@ -215,7 +230,7 @@ on _FixRemote gitFolder
 end _FixRemote
 
 on _DisplayRemote
-   put git_LocalArray ("gitFolder") into gitFolder
+   put _LocalValue ("gitFolder") into gitFolder
    --
    put git_GetRemoteAddress (gitFolder)
 end _DisplayRemote

@@ -7,22 +7,39 @@ type: controller
 version: 0.3
 
 /*
+Here we look to place the most immportant tools for git.
+that allow access to other tools and are not too slow to draw the menus necessary.
 */
 
 
---> Where?
+--> Working on
 -
-private function _FilesToCommit
-   put git_LocalArray ("statusArray") into statusArray
-   put statusArray ["Changes not staged for commit:"]["modified"] into modifiedFiles
-   return modifiedFiles
-end _FilesToCommit
+-- getprop disabled_AddAllUntracked
+   if _LocalValue ("gitFolder") is empty then return true
+   put _FilesToAdd() into untrackedFiles
+   if untrackedFiles is empty then
+      return true
+   else
+      return false
+   end if
+end disabled_AddAllUntracked
 
-private function _IsGitStatusDisplay
-   put git_LocalArray ("displayView") into displayView
-   put git_LocalArray ("projectName") into projectName
-   return _ExistsGitStatusDisplay (projectName)
-end _IsGitStatusDisplay
+-- getprop disabled_StageThenCommit
+   if _LocalValue ("gitFolder") is empty then return true
+   if _FilesToAdd() is not empty then return true
+   
+   if _FilesToStageAndCommit() then
+      return false
+   else
+      return true
+   end if
+end disabled_StageThenCommit
+
+private function _FilesToAdd
+   put _LocalValue ("statusArray") into statusArray
+   put statusArray ["Untracked files:"]["files"] into untrackedFileList
+   return untrackedFileList
+end _FilesToAdd
 
 
 --> Menu | Props
@@ -30,16 +47,34 @@ end _IsGitStatusDisplay
 local LocalArray
 
 getprop menu_Target [tObject]
-   put git_LocalArray ("gitFolder") into gitFolder
-   return gitFolder
+   _InitLocalArray tObject
+   return LocalArray ["gitFolder"]
 end menu_Target
+
+private command _InitLocalArray tObject
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   return dView
+end _InitLocalArray
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
 
 getprop gitDocumentation_Params
    return the hkey_CaseConditions ["M menu_GitDocumentation"] of me
 end gitDocumentation_Params
 
+-- getprop disabled_Pull
+   return _LocalValue ("gitRemoteAddress") is empty
+end disabled_Pull
+
+--  getprop disabled_PushCurrentBranch
+   return _LocalValue ("gitRemoteAddress") is empty
+end disabled_PushCurrentBranch
+
 getprop disabled_PushCurrentBranch
-   put git_LocalArray ("statusArray") into statusArray
+   put _LocalValue ("statusArray") into statusArray
    put statusArray ["Branch"] into branchArray
    put "(use 'git push' to publish your local commits)" into pushLine
    replace "'" with quote in pushLine
@@ -52,11 +87,11 @@ getprop disabled_PushCurrentBranch
 end disabled_PushCurrentBranch
 
 getprop disabled_RefreshGitStatus
-   if git_LocalArray ("gitIsActive") is false then
+   if _LocalValue ("gitFolder") is empty then
       return true
    end if
    
-   put git_LocalArray ("projectName") into projectName
+   put _LocalValue ("projectName") into projectName
    if _ExistsGitStatusDisplay (projectName) then
       return false
    else
@@ -65,46 +100,17 @@ getprop disabled_RefreshGitStatus
 end disabled_RefreshGitStatus
 
 getprop disabled_DisplayGitStatus
-   if git_LocalArray ("gitIsActive") is false then
+   if _LocalValue ("gitFolder") is empty then
       return true
    end if
    
-   put git_LocalArray ("projectName") into projectName
+   put _LocalValue ("projectName") into projectName
    if _ExistsGitStatusDisplay (projectName) then
       return "delete"
    else
       return false
    end if
 end disabled_DisplayGitStatus
-
-getprop disabled_Pull
-   return git_LocalArray ("_RemoteIsBad")
-end disabled_Pull
-
-getprop disabled_PushCurrentBranch
-   return git_LocalArray ("_RemoteIsBad")
-end disabled_PushCurrentBranch
-
-getprop disabled_AddAllUntracked
-   if git_LocalArray ("gitIsActive") is false then return true
-   put _FilesToAdd() into untrackedFiles
-   if untrackedFiles is empty then
-      return true
-   else
-      return false
-   end if
-end disabled_AddAllUntracked
-
-getprop disabled_StageThenCommit
-   if git_LocalArray ("gitIsActive") is false then return true
-   if _FilesToAdd() is not empty then return true
-   
-   if _FilesToStageAndCommit() then
-      return false
-   else
-      return true
-   end if
-end disabled_StageThenCommit
 
 
 --> Global | GIT | Basics | Menu
@@ -119,7 +125,7 @@ on menu_SaveAndRefresh
    _RefreshGitStatus
 end menu_SaveAndRefresh
 
-on _AddAllUntracked gitFolder
+on menu_AddAllUntracked gitFolder
    /*
    -- dig into this. "git add --update" does not seem to do anything useful.
    git_AddChanged
@@ -131,16 +137,16 @@ on _AddAllUntracked gitFolder
       lcw_Notify shellResult
    end if
    _RefreshGitStatus
-end _AddAllUntracked
+end menu_AddAllUntracked
 
-on _StageThenCommit gitFolder
+on menu_StageThenCommit gitFolder
    put lcw_Ask ("Comment on this change...") into someComment
    git_CommitChanges someComment, gitFolder
    _RefreshGitStatus
-end _StageThenCommit
+end menu_StageThenCommit
 
 on menu_TrackCommmitAndPush
-   put git_LocalArray ("projectName") into projectName
+   put _LocalValue ("projectName") into projectName
    put the name of stack projectName into homeStack
    ask_PushGithub homeStack
 end menu_TrackCommmitAndPush
@@ -153,23 +159,10 @@ on menu_Pull gitFolder
    
    put git_CurrentBranchName (gitFolder) into currentBranchName
    put "git pull origin" && kwote (currentBranchName) into someShell
-   
    put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
-   display_Lines shellResult, someShell
-   put the result into indexView
-   set the title_Menu of indexView to "Global | Git | Pull | Menu"
-   set the line_Menu of indexView to "Global | Git | Pull | Line | Menu"
-   -- set the displayed_ScriptObject of indexView to empty
-   set the displayed_GitCheckoutFolder of indexView to gitFolder
-   set the displayed_GitBranch of indexView to currentBranchName
    
-   _RefreshGitStatus
-   
-   /*
-   stack_RevertLoaded
-   put the result into displayView
-   set the menu_Title of displayView to "Global | Git | Pull | Menu"
-   */
+   # Display
+   display_GitPullResult shellResult, someShell
 end menu_Pull
 
 on menu_PushCurrentBranch gitFolder
@@ -182,8 +175,12 @@ end menu_PushCurrentBranch
 on _
 end _
 
+on menu_DisplayLocalConfig gitFolder
+   display_GitLocalConfig gitFolder
+end menu_DisplayLocalConfig
+
 on menu_LaunchGithubProject
-   put git_LocalArray ("projectName") into projectName
+   put _LocalValue ("projectName") into projectName
    --
    put the github_LaunchURL of stack projectName into someURL
    launch url someURL
@@ -207,7 +204,7 @@ end menu_GitDocumentation
 --> Private
 -
 private function _FilesToStageAndCommit
-   put git_LocalArray ("statusArray") into statusArray
+   put _LocalValue ("statusArray") into statusArray
    --
    put statusArray ["Changes not staged for commit:"] into notStagedArray
    put statusArray ["Changes to be committed:"] into toCommitArray
@@ -220,18 +217,12 @@ private function _FilesToStageAndCommit
    end switch
 end _FilesToStageAndCommit
 
-private function _FilesToAdd
-   put git_LocalArray ("statusArray") into statusArray
-   put statusArray ["Untracked files:"]["files"] into untrackedFileList
-   return untrackedFileList
-end _FilesToAdd
-
 private function _ExistsGitStatusDisplay
-   put git_LocalArray ("displayView") into displayView
+   put _LocalValue ("displayView") into displayView
    return exists (displayView)
 end _ExistsGitStatusDisplay
 
 private command _RefreshGitStatus
-   put git_LocalArray ("projectName") into projectName
+   put _LocalValue ("projectName") into projectName
    display_GitRefreshProjectName projectName
 end _RefreshGitStatus

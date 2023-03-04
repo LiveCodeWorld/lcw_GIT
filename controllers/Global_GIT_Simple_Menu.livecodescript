@@ -22,6 +22,7 @@ getprop menu_Target [tObject]
    put the display_View of tObject into displayView
    put the title_Text of displayView into projectName
    --
+   put displayView into LocalArray ["displayView"]
    put project_HasGit (projectName) into LocalArray ["gitIsInitialised"]
    return projectName
 end menu_Target
@@ -82,6 +83,19 @@ on menu_TrackCommmitAndPush projectName
    put the name of stack projectName into homeStack
    ask_PushGithub homeStack
 end menu_TrackCommmitAndPush
+
+on _
+end _
+
+on menu_LocalGitConfig projectName
+   put the git_Folder of stack projectName into gitFolder
+   if there is not a folder gitFolder then
+      put LocalArray ["displayView"] into displayView
+      lcw_AnswerWarning "Cannot locate git folder!", displayView
+   end if
+   --
+   display_GitLocalConfig gitFolder
+end menu_LocalGitConfig
 
 on menu_LaunchGithub projectName
    put env_ConstructProjectFolder (projectName) into projectFolder

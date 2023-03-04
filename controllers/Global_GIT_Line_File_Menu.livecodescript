@@ -15,17 +15,18 @@ local LocalArray
 --> Menu | Props
 -
 getprop menu_Target [tObject]
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   
    get the hilited_Element of tObject
    put item 1 of it into LocalArray ["topKey"]
    
-   put the display_View of tObject into displayView
-   put displayView into LocalArray ["displayView"]
-   put the displayed_ScriptObject of displayView into LocalArray ["scriptObject"]
-   put the displayed_GitCheckoutFolder of displayView into LocalArray ["gitCheckoutFolder"]
-   put the displayed_Array of displayView into LocalArray ["displayedArray"]
-   --
-   return displayView
+   return dView
 end menu_Target
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
 
 getprop disabled_Branch [arrayView]
    if LocalArray ["topKey"] = "Branch" then
@@ -132,7 +133,8 @@ private function _GetFile displayView
    put the hilited_Element of displayView into pathItems
    get item 3 to -1 of pathItems
    put word 1 of it into relativePath
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder  
+   put LocalArray ["gitFolder"] into gitCheckoutFolder  
+   -- put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder  
    put gitCheckoutFolder & relativePath into someFile
    return someFile
 end _GetFile

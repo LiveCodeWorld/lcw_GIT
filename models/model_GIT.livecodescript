@@ -12,6 +12,46 @@ version: 0.2
 
 --> Working on
 -
+--> Git | Folder
+-
+function git_GetRootFolder
+   put pref_GetValue ("gitRootFolder") into gitRootFolder
+   if gitRootFolder is empty then put revEnvironmentUserPluginsPath() & "/" into gitRootFolder -- a default
+   return gitRootFolder
+end git_GetRootFolder
+
+command git_SetRootFolder gitRootFolder
+   folder_Format gitRootFolder
+   pref_SetValue "gitRootFolder", gitRootFolder
+   return the result
+end git_SetRootFolder
+
+command git_AddRootFolderToIndex gitRootFolder, pProjectName
+   put git_GetCheckoutFolder (gitRootFolder) into gitRootFolder
+   if gitRootFolder is empty then return "Error:  folder is not within a git repository"
+   
+   if pProjectName is empty then
+      set the itemdelimiter to "/"
+      put item -1 of gitRootFolder into pProjectName
+   end if
+   put git_GetProjectArray() into gitProjectArray
+   put pProjectName into gitProjectArray [gitRootFolder]["project name"]
+   git_SetProjectArray gitProjectArray
+   return empty
+end git_AddRootFolderToIndex
+
+function git_ListProjectFolders
+   put git_GetProjectArray() into gitProjectArray
+   put keys(gitProjectArray) into folderIndex
+   return folderIndex
+end git_ListProjectFolders
+
+command git_RemoveProject gitRootFolder
+   put git_GetProjectArray() into gitProjectArray
+   delete variable gitProjectArray [gitRootFolder]
+   return keys(gitProjectArray)
+end git_RemoveProject
+
 getprop git_IsActive
    put the effective filename of the stack_Object of the target into someFile
    put git_GetActiveStatus (someFile) into someBoolean
@@ -214,21 +254,6 @@ function git_Version
 end git_Version
 
 
---> Git | Folder
--
-function git_GetRootFolder
-   put pref_GetValue ("gitRootFolder") into gitRootFolder
-   if gitRootFolder is empty then put revEnvironmentUserPluginsPath() & "/" into gitRootFolder -- a default
-   return gitRootFolder
-end git_GetRootFolder
-
-command git_SetRootFolder gitRootFolder
-   folder_Format gitRootFolder
-   pref_SetValue "gitRootFolder", gitRootFolder
-   return the result
-end git_SetRootFolder
-
-
 --> Git | Init
 -
 command git_AddIgnore gitRootFolder
@@ -288,35 +313,6 @@ end git_GetProjectArray
 command git_SetProjectArray gitProjectArray
    lcw_StoreArray "GitProjectArray.array", gitProjectArray
 end git_SetProjectArray
-
-
---> GIT | Model | Wrappers
--
-command git_AddRootFolderToIndex gitRootFolder, pProjectName
-   put git_GetCheckoutFolder (gitRootFolder) into gitRootFolder
-   if gitRootFolder is empty then return "Error:  folder is not within a git repository"
-   
-   if pProjectName is empty then
-      set the itemdelimiter to "/"
-      put item -1 of gitRootFolder into pProjectName
-   end if
-   put git_GetProjectArray() into gitProjectArray
-   put pProjectName into gitProjectArray [gitRootFolder]["project name"]
-   git_SetProjectArray gitProjectArray
-   return empty
-end git_AddRootFolderToIndex
-
-function git_ListProjectFolders
-   put git_GetProjectArray() into gitProjectArray
-   put keys(gitProjectArray) into folderIndex
-   return folderIndex
-end git_ListProjectFolders
-
-command git_RemoveProject gitRootFolder
-   put git_GetProjectArray() into gitProjectArray
-   delete variable gitProjectArray [gitRootFolder]
-   return keys(gitProjectArray)
-end git_RemoveProject
 
 function git_GetProject pGitRootFolder
    if pGitRootFolder is empty then put git_GetRootFolder() into pGitRootFolder

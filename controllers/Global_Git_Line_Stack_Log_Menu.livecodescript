@@ -11,6 +11,46 @@ version: 0.2
 -
 local LocalArray
 
+--> Menu | Props
+-
+getprop menu_Target [tObject]
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   
+   put the hilited_Lines of dView into lineNum
+   put the log_Array of dView into logArray
+   put logArray [lineNum]["commitHash"] into commitHash
+   put commitHash into LocalArray ["commitHash"]
+   
+   return dView
+end menu_Target
+
+private function _LocalValue someKey
+   return LocalArray [someKey]
+end _LocalValue
+
+private function _getSelectedCommitHash
+   return LocalArray ["commitHash"]
+end _getSelectedCommitHash
+
+private function _indexView
+   return LocalArray ["indexView"]
+end _indexView
+
+getprop stack_Hashs [mTarget]
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_R (sFile, pMaxNum)everseFileHashes (sFile)
+end stack_Hashs
+
+getprop back_Hashs [mTarget]
+   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
+   return git_ReverseFileHashes (sFile)
+end back_Hashs
+
+getprop back_Nums
+   return "0,-,1,2,3,4,5,6,7,8,9"
+end back_Nums
+
 
 --> Global | Git | Line | Stack | Log | Menu
 -
@@ -40,35 +80,18 @@ on submenu_Dev
 end submenu_Dev
 
 
---> Global | Git | Line | Stack | Log | Menu | Props
--
-getprop stack_Hashs [mTarget]
-   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
-   return git_ReverseFileHashes (sFile)
-end stack_Hashs
-
-getprop back_Hashs [mTarget]
-   put the filename of mTarget into sFile -- was "the stack_RelativeFile"
-   return git_ReverseFileHashes (sFile)
-end back_Hashs
-
-getprop back_Nums
-   return "0,-,1,2,3,4,5,6,7,8,9"
-end back_Nums
-
-
 --> Dev | Menu
 -
-on menu_DisplayCommitInfo stackObject
+on _DisplayCommitInfo stackObject
    put _getSelectedCommitHash() into commitHash
    put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
    
    put git_HashInfo (commitHash, gitCheckoutFolder) into hashInfo   
    put "git show" && kwote (commitHash) into someShell
    display_Text hashInfo, someShell
-end menu_DisplayCommitInfo
+end _DisplayCommitInfo
 
-on menu_StackData stackObject
+on _StackData stackObject
    put _getSelectedCommitHash() into commitHash
    
    put git_GetStackData (stackObject, commitHash) into stackData
@@ -77,9 +100,9 @@ on menu_StackData stackObject
    put "git show" && kwote (treeish) into someShell
    put someShell & comma & "git_GetStackData ()" into someTitle
    display_Text stackData, someTitle
-end menu_StackData
+end _StackData
 
-on menu_ListCommitInfo stackObject
+on _ListCommitInfo stackObject
    put _getSelectedCommitHash() into commitHash
    put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
    
@@ -87,9 +110,9 @@ on menu_ListCommitInfo stackObject
    
    put "git ls-tree" && commitHash into someShell
    display_Index logText, someShell
-end menu_ListCommitInfo
+end _ListCommitInfo
 
-on menu_StackHashLog stackObject
+on _StackHashLog stackObject
    -- a log of all the previous commits of a version specified by commitHash
    put _getSelectedCommitHash() into commitHash
    
@@ -97,12 +120,12 @@ on menu_StackHashLog stackObject
    
    put "the git_StackHashLog [" & commitHash & "] of" && stackObject into someTitle
    display_Index logText, someTitle
-end menu_StackHashLog
+end _StackHashLog
 
 on _
 end _
 
-on menu_DiffStackBinaries stackObject
+on _DiffStackBinaries stackObject
    -- put the tree_SelectedLink of treeField into commitHash
    -- put the displayed_Object of treeField into stackObject
    put _getSelectedCommitHash() into commitHash
@@ -114,30 +137,4 @@ on menu_DiffStackBinaries stackObject
    put the result into toFile
    
    diff_Files thisFile, toFile
-end menu_DiffStackBinaries
-
-
---> Menu | Props
--
-on menu_Init tObject
-   put the index_View of tObject into indexView
-   put the hilited_Lines of indexView into lineNum
-   put the displayed_GitCheckoutFolder of indexView into LocalArray ["gitCheckoutFolder"]
-   
-   put the log_Array of indexView into logArray
-   put logArray [lineNum]["commitHash"] into commitHash
-   
-   put commitHash into LocalArray ["commitHash"]
-   put indexView into LocalArray ["indexView"]
-end menu_Init
-
-
---> Private
--
-private function _getSelectedCommitHash
-   return LocalArray ["commitHash"]
-end _getSelectedCommitHash
-
-private function _indexView
-   return LocalArray ["indexView"]
-end _indexView
+end _DiffStackBinaries
