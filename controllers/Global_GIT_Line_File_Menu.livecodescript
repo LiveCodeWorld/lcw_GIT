@@ -215,12 +215,12 @@ end menu_StashChanges
 
 on menu_StageAllChanges
    -- git_AddChanged
-   breakpoint
    put lcw_Ask ("Comment on this change...") into someComment
    --
    put LocalArray ["gitFolder"] into gitFolder  
    git_CommitChanges someComment, gitFolder
-   _RefreshGitStatus
+   --
+   _RefreshGitFolderStatus
 end menu_StageAllChanges
 
 
@@ -228,8 +228,8 @@ end menu_StageAllChanges
 -
 private command _RefreshGitFolderStatus
    put LocalArray ["displayView"] into displayView
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
-   display_GitFolderStatus gitCheckoutFolder, displayView
+   put LocalArray ["gitFolder"] into gitFolder
+   display_GitFolderStatus gitFolder, displayView
 end _RefreshGitFolderStatus
 
 private function _getFile arrayView
