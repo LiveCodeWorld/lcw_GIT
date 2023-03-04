@@ -15,6 +15,16 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
+function github_ListMyRepos
+   put github_RestGetData ("/user/repos") into someData
+   return someData
+end github_ListMyRepos
+
+function github_ListPublicRepos
+   put github_RestGetData ("/users/opn/repos") into someData
+   return someData
+end github_ListPublicRepos
+
 getprop github_WikiPage
    put the stack_Object of the target into stackObject
    put github_CreateStackWikiPage (stackObject) into mdLines
@@ -33,6 +43,28 @@ getprop github_RelativePath
    put item sNum to -1 of sFile into relPath
    return relPath
 end github_RelativePath
+
+
+--> GitHub | Tokens
+-
+function github_GetApiToken
+   put secret_Get ("github_GetApiToken") into gitHubApiToken
+   return gitHubApiToken
+end github_GetApiToken
+
+function gitHub_OldApiToken
+   put "GitHubAuthoringToken" into prefName -- "GitHubApiToken"
+   put pref_GetValue (prefName) into gitHubApiToken
+   if gitHubApiToken is empty then
+      put pref_FetchValue (prefName) into gitHubApiToken
+      pref_SetValue prefName, gitHubApiToken
+   end if
+   return gitHubApiToken
+end gitHub_OldApiToken
+
+command github_SetApiToken gitHubApiToken
+   pref_SetValue "GitHubApiToken", gitHubApiToken
+end github_SetApiToken
 
 
 --> GitHub | URL
@@ -385,26 +417,6 @@ function script_GetHandlerMarkdown tObject, relativePath
 end script_GetHandlerMarkdown
 
 
---> GitHub | Tokens
--
-function github_GetApiToken
-   -- check LastPass
-   -- token is cached first time we use this
-   
-   put "GitHubAuthoringToken" into prefName -- "GitHubApiToken"
-   put pref_GetValue (prefName) into gitHubApiToken
-   if gitHubApiToken is empty then
-      put pref_FetchValue (prefName) into gitHubApiToken
-      pref_SetValue prefName, gitHubApiToken
-   end if
-   return gitHubApiToken
-end github_GetApiToken
-
-command github_SetApiToken gitHubApiToken
-   pref_SetValue "GitHubApiToken", gitHubApiToken
-end github_SetApiToken
-
-
 --> GitHub | Create
 -
 command github_CreateProject repoName, gitFolder, repoDescription
@@ -574,19 +586,15 @@ function github_FetchRepoArray repoName, pOwner
    return repoArray
 end github_FetchRepoArray
 
-function github_ListMyRepos
-   put github_RestGet ("/user/repos") into someData
-   return someData
-end github_ListMyRepos
-
-function github_ListPublicRepos
-   put github_RestGet ("/users/opn/repos") into someData
-   return someData
-end github_ListPublicRepos
-
 
 --> GitHub | REST
 -
+function github_RestGetData restPath
+   put github_RestGet (restPath) into someJSON
+   put json_ToArray (someJSON) into someData
+   return someData
+end github_RestGetData
+
 function github_RestGet restPath
    put _constructApiUrl (restPath) into someUrl
    put github_RestGetFromUrl (someUrl) into someJSON

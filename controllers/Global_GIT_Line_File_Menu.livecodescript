@@ -216,6 +216,11 @@ end menu_StashChanges
 on menu_StageAllChanges
    -- git_AddChanged
    breakpoint
+   put lcw_Ask ("Comment on this change...") into someComment
+   --
+   put LocalArray ["gitFolder"] into gitFolder  
+   git_CommitChanges someComment, gitFolder
+   _RefreshGitStatus
 end menu_StageAllChanges
 
 

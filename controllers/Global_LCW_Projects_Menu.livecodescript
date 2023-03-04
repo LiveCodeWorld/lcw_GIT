@@ -85,10 +85,13 @@ on menu_CreateNewProject
    project_AskCreate
 end menu_CreateNewProject
 
-on _
+private on _
 end _
 
 on menu_LocalProjects displayView
+   -- put env_ListLocalProjects() into someIndex
+   -- _SetIndex someIndex, the params, displayView
+   
    display_Environment
 end menu_LocalProjects
 
@@ -98,8 +101,8 @@ on menu_GithubProjects displayView
    _SetIndex someIndex, the params, displayView
 end menu_GithubProjects
 
-on _
-end _
+private on __
+end __
 
 on menu_NotOnGithub displayView
    put github_ListNotOnGithub() into someIndex
@@ -117,11 +120,13 @@ on menu_ExportProjectArrays
    env_ExportMenusAndStackFiles
 end menu_ExportProjectArrays
 
-on _
-end _
+private on ___
+end ___
 
-on menu_LocalProjects displayView
-   put env_ListLocalProjects() into someIndex
+on menu_Refresh displayView
+   set the title_Text of displayView to "LiveCodeWorld"
    --
-   _SetIndex someIndex, the params, displayView
-end menu_LocalProjects
+   display_GithubProjects
+end menu_Refresh
+
+

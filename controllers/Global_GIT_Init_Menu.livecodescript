@@ -7,7 +7,7 @@ type: controller
 version: 0.3
 
 /*
-This menu is for project displays. Typically an ndex_View with then menu_Target set to the project_Name.
+This menu is for project displays. Typically an index_View with then menu_Target set to the project_Name.
 */
 
 --> Menu | Init
@@ -79,8 +79,9 @@ on _
 end _
 
 on menu_CreateGithubProject projectName
-   breakpoint
    put LocalArray ["orgName"] into orgName
+   put LocalArray ["gitFolder"] into gitFolder
+   --
    put github_ListOrgProjects (orgName) into lcwRepoNames
    
    -- let's check to see if GitHub repo exists (Should be disabled)
@@ -108,6 +109,8 @@ on menu_CreateGithubProject projectName
    put githubProjectArray ["ssh_url"] into remoteSshUrl
    --
    put remoteSshUrl
+   --
+   display_GitProjectStatus projectName
 end menu_CreateGithubProject
 
 on menu_LaunchGithubProject projectName
