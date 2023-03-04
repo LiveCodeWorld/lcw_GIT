@@ -62,16 +62,20 @@ on saveStackRequest
    pass saveStackRequest -- or the stack won't be saved
 end saveStackRequest
 
-put the displayed_GitSettings of displayView to projectName
-
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    put the git_SettingsModel of arrayView into cArray
    put cArray ["gitFolder"] into gitFolder
+   --
+   get "(use 'git push' to publish your local commits)"
+   replace "'" with quote in it
+   if shortFileOrFolder = it then
+      display_GitPushCurrentBranch gitFolder
+      return the result
+   end if
    breakpoint
    
    text_AddTrailing gitFolder, slash
    put gitFolder & shortFileOrFolder into fileOrFolder
-   
    switch
       case there is a stack fileOrFolder
          if the scriptonly of stack fileOrFolder is true then
