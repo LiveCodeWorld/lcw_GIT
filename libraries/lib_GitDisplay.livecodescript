@@ -14,6 +14,27 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working on
 -
+command git_AskInit projectName, displayView
+   put merge ("Are you sure you want to initialise the project '[[projectName]]' with a git repo?") into someQuestion
+   lcw_Answer someQuestion, displayView, projectName
+   --
+   put the project_Folder of stack projectName into projectFolder
+   git_InitFolder projectFolder
+   put the result into testGitRootFolder
+   --
+   if testGitRootFolder is not projectFolder then
+      breakpoint
+   end if
+end git_AskInit
+
+command git_StageThenCommit gitFolder
+   put lcw_Ask ("Comment on this change...", "Minor changes") into someComment
+   git_CommitChanges someComment, gitFolder
+   put the result into gitResult
+   display_GitFolderStatus gitFolder
+   return gitResult
+end git_StageThenCommit
+
 command ask_PushGithub sObject, pQuestion, pForce
    if pForce is not true AND the git_IsCommitted of sObject is true then return empty
    put the git_Folder of sObject into gitFolder
@@ -63,20 +84,41 @@ on saveStackRequest
 end saveStackRequest
 
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
+   put the selected_Path of arrayView into sPath
+   --
    put the git_SettingsModel of arrayView into cArray
    put cArray ["gitFolder"] into gitFolder
    --
-   get "(use 'git push' to publish your local commits)"
-   replace "'" with quote in it
-   if shortFileOrFolder = it then
-      display_GitPushCurrentBranch gitFolder
-      return the result
-   end if
-   breakpoint
-   
+   put "(use 'git push' to publish your local commits)" into pushLine
+   replace "'" with quote in pushLine
+   --
    text_AddTrailing gitFolder, slash
    put gitFolder & shortFileOrFolder into fileOrFolder
    switch
+      case item 1 of sPath = "Changes not staged for commit:"
+         if the shiftKey is "Down" then
+            git_StageThenCommit gitFolder
+         end if
+         break
+      case item 1 of sPath = "Changes to be committed:"
+         if the shiftKey is "Down" then
+            git_StageThenCommit gitFolder
+         end if
+      case item 1 of sPath = "Untracked files:"
+         if the shiftKey is "Down" then
+            set the cursor to watch
+            git_AddEverything gitFolder
+            put the result into shellResult
+            if shellResult is not empty then
+               lcw_Notify shellResult
+            end if
+            display_GitFolderStatus gitFolder
+         end if
+         break
+      case shortFileOrFolder = pushLine
+         display_GitPushCurrentBranch gitFolder
+         return the result
+         break
       case there is a stack fileOrFolder
          if the scriptonly of stack fileOrFolder is true then
             edit the script of stack fileOrFolder
@@ -331,7 +373,8 @@ command display_GitFolderStatus gitFolder
    array_StripEmptyKeys statusArray
    
    if exists (displayView) then
-      set the displayed_Array of displayView to statusArray
+      set the displayed_Data of displayView to statusArray
+      put the expanded_Paths of displayView
    else
       display_Array statusArray, gitShortFolder, "GIT Status"
       put the result into displayView

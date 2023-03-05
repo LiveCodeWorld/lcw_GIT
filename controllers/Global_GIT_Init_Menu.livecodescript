@@ -10,6 +10,12 @@ version: 0.3
 This menu is for project displays. Typically an index_View with then menu_Target set to the project_Name.
 */
 
+function git_GetRemote gitFolder
+   put "git remote -v" into someShell
+   git_ExecuteShell someShell, gitFolder
+   return the result
+end git_GetRemote
+
 --> Menu | Init
 -
 local LocalArray
@@ -61,21 +67,12 @@ end mouseDoubleUp_GitHub
 --> Global | GIT | Init | Menu
 -
 on menu_InitialiseGit projectName
-   put LocalArray ["displayView"] into displayView
-   put LocalArray ["projectFolder"] into projectFolder
+   put LocalArray ["projectName"] into projectName
    --
-   put merge ("Are you sure you want to initialise the project '[[projectName]]' with a git repo?") into someQuestion
-   lcw_Answer someQuestion, displayView, projectName
-   --
-   git_InitFolder projectFolder
-   put the result into testGitRootFolder
-   --
-   if testGitRootFolder is not projectFolder then
-      breakpoint
-   end if
+   git_AskInit projectName
 end menu_InitialiseGit
 
-on _
+private command _
 end _
 
 on menu_CreateGithubProject projectName
@@ -124,9 +121,55 @@ on menu_DisplayGithubOrg
    display_GithubProjects orgName
 end menu_DisplayGithubOrg
 
+private command __
+end __
+
 on menu_DisplayGithubInfo
    put LocalArray ["gitRemoteAddress"] into gitRemoteAddress
    --
    put github_FindRepoName (gitRemoteAddress) into repoName
    display_GitHubInfo repoName
 end menu_DisplayGithubInfo
+
+on menu_DisplayGitRemote
+   put LocalArray ["gitFolder"] into gitFolder
+   --
+   put git_GetRemote (gitFolder)
+end menu_DisplayGitRemote
+
+getprop disabled_SetGitRemote [projectName]
+   get git_GetRemote (gitFolder)
+   if it contains "git@" then
+      return true
+   else
+      return false
+   end if
+end disabled_SetGitRemote
+
+on menu_SetGitRemote projectName
+   put LocalArray ["gitFolder"] into gitFolder
+   --
+   get git_GetRemote (gitFolder)
+   put line 1 of it into oldRemote
+   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
+   delete word 1 of it
+   delete word -1 of it
+   put word 1 to -1 of it into oldRemote
+   --
+   set the itemdelimiter to slash
+   put item -1 of oldRemote into shortFile
+   --
+   put "https://github.com/LiveCodeWorld/lcw_Learn.git" into newRemoteURL
+   put shortFile into item -1 of newRemoteURL
+   --
+   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
+   put "git remote set-url origin" && remoteURL into someShell
+   git_ExecuteShell someShell, gitFolder
+   --
+   if the result is not empty then
+      put the result
+      breakpoint
+   end if
+   
+   display_GitProjectStatus projectName
+end menu_SetGitRemote

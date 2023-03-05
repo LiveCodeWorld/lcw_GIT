@@ -424,6 +424,7 @@ command github_CreateProject repoName, gitFolder, repoDescription
    github_CreateOrgRepo repoName, repoDescription
    put the result into postJSON
    put json_ToArray (postJSON) into githubProjectArray
+   display githubProjectArray, "githubProjectArray"
    --
    put githubProjectArray ["ssh_url"] into gitRemoteAddress
    if gitRemoteAddress is empty then

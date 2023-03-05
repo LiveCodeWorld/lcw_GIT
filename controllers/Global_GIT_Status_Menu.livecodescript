@@ -35,6 +35,10 @@ on menu_RefreshDisplay displayView
    display_GitRefreshProjectName projectName
 end menu_RefreshDisplay
 
+on menu_TestExpanded displayView
+   put the expanded_Paths of displayView
+end menu_TestExpanded
+
 on submenu_Dev
    return menu_Create ("Global | GIT | Dev | Menu")
 end submenu_Dev
