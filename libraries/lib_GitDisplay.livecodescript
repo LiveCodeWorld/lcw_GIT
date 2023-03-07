@@ -130,6 +130,9 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
       case item 1 of sPath = "Changes not staged for commit:"
          if the shiftKey is "Down" then
             git_StageThenCommit gitFolder
+            --
+            put the result into displayView
+            set the expanded_Paths [true] of displayView to "Branch"
          end if
          break
       case item 1 of sPath = "Changes to be committed:"
@@ -384,8 +387,6 @@ command display_GitProjectStatus projectName
 end display_GitProjectStatus
 
 command display_GitFolderStatus gitFolder, pExpandedItems
-   put "Branch" into pExpandedItems
-   
    if there is not a folder gitFolder then return empty
    put git_FetchStatusArray (gitFolder) into statusArray
    
@@ -411,11 +412,11 @@ command display_GitFolderStatus gitFolder, pExpandedItems
       set the script of displayView to newScript
    end if
    
-   # Work ot toplevel unfolded
+   # Work out folded
    if pExpandedItems is not empty then
       -- sensitive to capitalisation
       put display_ConstructFoldState (pExpandedItems) into foldedArray
-      set the fold_State of displayView to pFoldedArray
+      set the fold_State [true] of displayView to foldedArray
    end if
    
    # Set display Menu Model
