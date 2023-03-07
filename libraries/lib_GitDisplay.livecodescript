@@ -14,6 +14,60 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working on
 -
+on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
+   put the selected_Path of arrayView into sPath
+   --
+   put the git_SettingsModel of arrayView into cArray
+   put cArray ["gitFolder"] into gitFolder
+   --
+   put "(use 'git push' to publish your local commits)" into pushLine
+   replace "'" with quote in pushLine
+   --
+   text_AddTrailing gitFolder, slash
+   put gitFolder & shortFileOrFolder into fileOrFolder
+   switch
+      case item 1 of sPath = "Changes not staged for commit:"
+         if the shiftKey is "Down" then
+            git_StageThenCommit gitFolder
+            --
+            set the expanded_Paths [true] of arrayView to "Branch"
+         end if
+         break
+      case item 1 of sPath = "Changes to be committed:"
+         if the shiftKey is "Down" then
+            git_StageThenCommit gitFolder
+         end if
+      case item 1 of sPath = "Untracked files:"
+         if the shiftKey is "Down" then
+            set the cursor to watch
+            git_AddEverything gitFolder
+            put the result into shellResult
+            if shellResult is not empty then
+               lcw_Notify shellResult
+            end if
+            display_GitFolderStatus gitFolder
+         end if
+         break
+      case shortFileOrFolder = pushLine
+         display_GitPushCurrentBranch gitFolder
+         return the result
+         break
+      case there is a stack fileOrFolder
+         if the scriptonly of stack fileOrFolder is true then
+            edit the script of stack fileOrFolder
+         else
+            go to stack fileOrFolder
+         end if
+         break
+      case there is a folder fileOrFolder
+         finder_Reveal fileOrFolder
+         break
+      case there is a file fileOrFolder
+         atom_DisplayFile fileOrFolder 
+         break
+   end switch
+end mDoubleUp_DisplayGitFile
+
 function git_IsUpToDate gitFolder
    -- Your branch is up to date with 'origin/master'.
    put git_FetchStatusArray (gitFolder) into statusArray
@@ -114,60 +168,6 @@ on saveStackRequest
    --
    pass saveStackRequest -- or the stack won't be saved
 end saveStackRequest
-
-on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
-   put the selected_Path of arrayView into sPath
-   --
-   put the git_SettingsModel of arrayView into cArray
-   put cArray ["gitFolder"] into gitFolder
-   --
-   put "(use 'git push' to publish your local commits)" into pushLine
-   replace "'" with quote in pushLine
-   --
-   text_AddTrailing gitFolder, slash
-   put gitFolder & shortFileOrFolder into fileOrFolder
-   switch
-      case item 1 of sPath = "Changes not staged for commit:"
-         if the shiftKey is "Down" then
-            git_StageThenCommit gitFolder
-            --
-            set the expanded_Paths [true] of arrayView to "Branch"
-         end if
-         break
-      case item 1 of sPath = "Changes to be committed:"
-         if the shiftKey is "Down" then
-            git_StageThenCommit gitFolder
-         end if
-      case item 1 of sPath = "Untracked files:"
-         if the shiftKey is "Down" then
-            set the cursor to watch
-            git_AddEverything gitFolder
-            put the result into shellResult
-            if shellResult is not empty then
-               lcw_Notify shellResult
-            end if
-            display_GitFolderStatus gitFolder
-         end if
-         break
-      case shortFileOrFolder = pushLine
-         display_GitPushCurrentBranch gitFolder
-         return the result
-         break
-      case there is a stack fileOrFolder
-         if the scriptonly of stack fileOrFolder is true then
-            edit the script of stack fileOrFolder
-         else
-            go to stack fileOrFolder
-         end if
-         break
-      case there is a folder fileOrFolder
-         finder_Reveal fileOrFolder
-         break
-      case there is a file fileOrFolder
-         atom_DisplayFile fileOrFolder 
-         break
-   end switch
-end mDoubleUp_DisplayGitFile
 
 
 --> Props
