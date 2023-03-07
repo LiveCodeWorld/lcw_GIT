@@ -175,15 +175,6 @@ end github_UpdateAndPush
 
 --> Props
 -
-getprop git_Tree
-   return _GitTreeView()
-end git_Tree
-
-getprop git_TreeField
-   put _GitTreeView() into gitTreeView
-   return the tree_Field of gitTreeView
-end git_TreeField
-
 getprop git_StatusMenuTitle
    -- only used by "menu_Title" in the line_Menu of the dynamically created Git Status display_Array as set in arrayView script
    -- utility for customising git array display
@@ -779,7 +770,7 @@ function git_LogLinkOutline simpleLog
 end git_LogLinkOutline
 
 
---> Private
+--> Objects
 -
 private function _GitTreeView
    put the module_View of stack "View|Tree|GIT" into gitTreeView
@@ -796,5 +787,14 @@ function _DisplayGitStatusScript
    replace "'" with quote in someScript
    return someScript
 end _DisplayGitStatusScript
+
+getprop git_Tree
+   return _GitTreeView()
+end git_Tree
+
+getprop git_TreeField
+   put _GitTreeView() into gitTreeView
+   return the tree_Field of gitTreeView
+end git_TreeField
 
 
