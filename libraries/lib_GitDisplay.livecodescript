@@ -4,7 +4,7 @@
 license: GPLv3
 name: lib_GitDisplay
 type: library
-version: 0.2
+version: 0.3
 
 /*
 A library for working with GIT.
