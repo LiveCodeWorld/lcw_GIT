@@ -383,7 +383,9 @@ command display_GitProjectStatus projectName
    return displayView
 end display_GitProjectStatus
 
-command display_GitFolderStatus gitFolder
+command display_GitFolderStatus gitFolder, pExpandedItems
+   put "Branch" into pExpandedItems
+   
    if there is not a folder gitFolder then return empty
    put git_FetchStatusArray (gitFolder) into statusArray
    
@@ -395,7 +397,6 @@ command display_GitFolderStatus gitFolder
    
    if exists (displayView) then
       set the displayed_Data of displayView to statusArray
-      put the expanded_Paths of displayView
    else
       display_Array statusArray, gitShortFolder, "GIT Status"
       put the result into displayView
@@ -408,6 +409,13 @@ command display_GitFolderStatus gitFolder
       put _DisplayGitStatusScript() into someScript
       put oScript & CR & CR & someScript into newScript
       set the script of displayView to newScript
+   end if
+   
+   # Work ot toplevel unfolded
+   if pExpandedItems is not empty then
+      -- sensitive to capitalisation
+      put display_ConstructFoldState (pExpandedItems) into foldedArray
+      set the fold_State of displayView to pFoldedArray
    end if
    
    # Set display Menu Model
