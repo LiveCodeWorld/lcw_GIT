@@ -14,6 +14,38 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working on
 -
+function git_IsUpToDate gitFolder
+   -- Your branch is up to date with 'origin/master'.
+   put git_FetchStatusArray (gitFolder) into statusArray
+   if keys (statusArray) is not "Branch" then return false
+   --
+   put statusArray ["Branch"] into bArray
+   repeat for each key someLine in bArray
+      if someLine begins with "Your branch is up to date with '" then
+         return true
+      end if
+   end repeat
+   return false
+end git_IsUpToDate
+
+function git_FetchStatusArray gitFolder
+   if there is not a folder gitFolder then return empty
+   put git_FetchStatusTable (gitFolder) into gitStatusTable
+   
+   # Check
+   set the itemdelimiter to ":"
+   if item 1 of gitStatusTable = "fatal" then
+      -- fatal: Not a git repository (or any of the parent directories): .git
+      answer warning gitStatusTable
+      return empty
+   end if
+   
+   put git_ConstructStatusArray (gitStatusTable) into statusArray
+   array_StripEmptyKeys statusArray
+   --
+   return statusArray
+end git_FetchStatusArray
+
 command git_AskInit projectName, displayView
    put merge ("Are you sure you want to initialise the project '[[projectName]]' with a git repo?") into someQuestion
    lcw_Answer someQuestion, displayView, projectName
@@ -353,24 +385,13 @@ end display_GitProjectStatus
 
 command display_GitFolderStatus gitFolder
    if there is not a folder gitFolder then return empty
-   put git_FetchStatusTable (gitFolder) into gitStatusTable
-   
-   # Check
-   set the itemdelimiter to ":"
-   if item 1 of gitStatusTable = "fatal" then
-      -- fatal: Not a git repository (or any of the parent directories): .git
-      answer warning gitStatusTable
-      return empty
-   end if
+   put git_FetchStatusArray (gitFolder) into statusArray
    
    # Find an existing displayView
    set the itemdelimiter to slash
    put item -1 of gitFolder into gitShortFolder
    put display_FindView ("Git Status", gitShortFolder) into displayView
    set the itemdelimiter to comma
-   
-   put git_ConstructStatusArray (gitStatusTable) into statusArray
-   array_StripEmptyKeys statusArray
    
    if exists (displayView) then
       set the displayed_Data of displayView to statusArray

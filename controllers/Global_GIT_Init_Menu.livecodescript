@@ -10,11 +10,24 @@ version: 0.3
 This menu is for project displays. Typically an index_View with then menu_Target set to the project_Name.
 */
 
-function git_GetRemote gitFolder
-   put "git remote -v" into someShell
-   git_ExecuteShell someShell, gitFolder
-   return the result
-end git_GetRemote
+--> Working on
+-
+private function _AskRemote gitFolder
+   get git_GetRemote (gitFolder)
+   put line 1 of it into oldRemote
+   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
+   delete word 1 of it
+   delete word -1 of it
+   put word 1 to -1 of it into oldRemote
+   --
+   set the itemdelimiter to slash
+   put item -1 of oldRemote into shortFile
+   put "https://github.com/LiveCodeWorld/" & shortFile into newRemoteURL
+   --
+   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
+   return remoteURL
+end _AskRemote
+
 
 --> Menu | Init
 -
@@ -146,30 +159,51 @@ getprop disabled_SetGitRemote [projectName]
    end if
 end disabled_SetGitRemote
 
+getprop disabled_AddGitRemote [projectName]
+   get git_GetRemote (gitFolder)
+   if it is empty then
+      return false
+   else
+      return true
+   end if
+end disabled_AddGitRemote
+
 on menu_SetGitRemote projectName
    put LocalArray ["gitFolder"] into gitFolder
    --
-   get git_GetRemote (gitFolder)
-   put line 1 of it into oldRemote
-   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
-   delete word 1 of it
-   delete word -1 of it
-   put word 1 to -1 of it into oldRemote
+   put _AskRemote (gitFolder) into remoteURL
    --
-   set the itemdelimiter to slash
-   put item -1 of oldRemote into shortFile
-   --
-   put "https://github.com/LiveCodeWorld/lcw_Learn.git" into newRemoteURL
-   put shortFile into item -1 of newRemoteURL
-   --
-   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
    put "git remote set-url origin" && remoteURL into someShell
    git_ExecuteShell someShell, gitFolder
-   --
    if the result is not empty then
       put the result
       breakpoint
    end if
-   
+   --
    display_GitProjectStatus projectName
 end menu_SetGitRemote
+
+on menu_AddGitRemote projectName
+   put LocalArray ["gitFolder"] into gitFolder
+   --
+   put _AskRemote (gitFolder) into remoteURL
+   --
+   put "git remote add origin" && remoteURL into someShell
+   --
+   git_ExecuteShell someShell, gitFolder
+   if the result is not empty then breakpoint
+   --
+   display_GitProjectStatus projectName
+end menu_AddGitRemote
+
+on menu_FirstPush projectName
+   put LocalArray ["gitFolder"] into gitFolder
+   --
+   git_FirstPush gitFolder
+   if the result is not empty then
+      put the result
+      breakpoint
+   end if
+   --
+   display_GitProjectStatus projectName
+end menu_FirstPush

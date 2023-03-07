@@ -15,6 +15,42 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
+command github_CreateProject repoName, gitFolder, repoDescription
+   -- First Create a new GitHub repo
+   github_CreateOrgRepo repoName, repoDescription
+   put the result into postJSON
+   put json_ToArray (postJSON) into githubProjectArray
+   --
+   display_Data githubProjectArray, "githubProjectArray"
+   --
+   put githubProjectArray ["clone_url"] into gitRemoteAddress
+   if gitRemoteAddress is empty then
+      breakpoint
+   end if
+   
+   -- we need to add gitRemoteAddress to local folder
+   git_AddFolderToRemote gitFolder, gitRemoteAddress
+   put the result into addResult
+   --
+   git_FirstPush gitFolder
+   --
+   return githubProjectArray
+end github_CreateProject
+
+function git_GetRemote gitFolder
+   put "git remote -v" into someShell
+   git_ExecuteShell someShell, gitFolder
+   return the result
+end git_GetRemote
+
+command git_FirstPush gitFolder
+   git_ExecuteShell "git branch -M main", gitFolder
+   if the result is not empty then breakpoint
+   --
+   git_ExecuteShell "git push -u origin main", gitFolder
+   return the result
+end git_FirstPush
+
 function github_ListMyRepos
    put github_RestGetData ("/user/repos") into someData
    return someData
@@ -419,25 +455,6 @@ end script_GetHandlerMarkdown
 
 --> GitHub | Create
 -
-command github_CreateProject repoName, gitFolder, repoDescription
-   -- First Create a new GitHub repo
-   github_CreateOrgRepo repoName, repoDescription
-   put the result into postJSON
-   put json_ToArray (postJSON) into githubProjectArray
-   display githubProjectArray, "githubProjectArray"
-   --
-   put githubProjectArray ["ssh_url"] into gitRemoteAddress
-   if gitRemoteAddress is empty then
-      breakpoint
-   end if
-   
-   -- we need to add gitRemoteAddress to local folder
-   git_AddFolderToRemote gitFolder, gitRemoteAddress
-   put the result into addResult
-   --
-   return githubProjectArray
-end github_CreateProject
-
 function github_FetchSshUrl repoName
    put github_FetchRepoArray (repoName) into repoArray
    put repoArray ["ssh_url"] into remoteSshUrl

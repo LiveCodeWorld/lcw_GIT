@@ -26,14 +26,24 @@ on insert_GitBasics
    return "Global | GIT | Basics | Menu"
 end insert_GitBasics
 
-on _
-end _
+on __
+end __
 
 on menu_RefreshDisplay displayView
    put the title_Text of displayView into projectName
    --
    display_GitRefreshProjectName projectName
 end menu_RefreshDisplay
+
+on ___
+end ___
+
+on menu_TestGitStatus dView
+   put the git_SettingsModel of dView into sModel
+   put sModel ["gitFolder"] into gitFolder
+   --
+   put git_IsUpToDate (gitFolder)
+end menu_TestGitStatus
 
 on menu_TestExpanded displayView
    put the expanded_Paths of displayView
