@@ -68,6 +68,27 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    end switch
 end mDoubleUp_DisplayGitFile
 
+
+--> Events
+-
+on saveStackRequest
+   -- update the Git Status displays
+   put the long id of the target into cardObject
+   put the git_ShortFolder of cardObject into gitShortFolder
+   if gitShortFolder is empty then pass saveStackRequest -- or the stack won't be saved
+   --
+   put display_FindView ("Git Status", gitShortFolder) into displayView
+   if displayView is not empty then
+      -- display_GitRefreshProjectName gitShortFolder
+      send "display_GitRefreshProjectName gitShortFolder" to me in 20 ticks -- display after saving
+   end if
+   --
+   pass saveStackRequest -- or the stack won't be saved
+end saveStackRequest
+
+
+--> Git | UpToDate
+-
 function git_IsUpToDate gitFolder
    -- Your branch is up to date with 'origin/master'.
    put git_FetchStatusArray (gitFolder) into statusArray
@@ -150,24 +171,6 @@ command github_UpdateAndPush gitFolder, someComment
    put the result into displayView
    return displayView
 end github_UpdateAndPush
-
-
---> Events
--
-on saveStackRequest
-   -- update the Git Status displays
-   put the long id of the target into cardObject
-   put the git_ShortFolder of cardObject into gitShortFolder
-   if gitShortFolder is empty then pass saveStackRequest -- or the stack won't be saved
-   --
-   put display_FindView ("Git Status", gitShortFolder) into displayView
-   if displayView is not empty then
-      -- display_GitRefreshProjectName gitShortFolder
-      send "display_GitRefreshProjectName gitShortFolder" to me in 20 ticks -- display after saving
-   end if
-   --
-   pass saveStackRequest -- or the stack won't be saved
-end saveStackRequest
 
 
 --> Props
