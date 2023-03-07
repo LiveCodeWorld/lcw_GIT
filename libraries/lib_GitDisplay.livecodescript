@@ -131,8 +131,7 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
          if the shiftKey is "Down" then
             git_StageThenCommit gitFolder
             --
-            put the result into displayView
-            set the expanded_Paths [true] of displayView to "Branch"
+            set the expanded_Paths [true] of arrayView to "Branch"
          end if
          break
       case item 1 of sPath = "Changes to be committed:"
