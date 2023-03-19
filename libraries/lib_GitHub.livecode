@@ -114,6 +114,12 @@ function git_GetRemote gitFolder
 end git_GetRemote
 
 command git_FirstPush gitFolder
+   /*
+   git remote add origin https://github.com/LiveCodeWorld/lcw_Camera.git
+   git branch -M main
+   git push -u origin main
+   */
+   
    git_ExecuteShell "git branch -M main", gitFolder
    if the result is not empty then breakpoint
    --

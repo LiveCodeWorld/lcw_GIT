@@ -10,25 +10,6 @@ version: 0.3
 This menu is for project displays. Typically an index_View with then menu_Target set to the project_Name.
 */
 
---> Working on
--
-private function _AskRemote gitFolder
-   get git_GetRemote (gitFolder)
-   put line 1 of it into oldRemote
-   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
-   delete word 1 of it
-   delete word -1 of it
-   put word 1 to -1 of it into oldRemote
-   --
-   set the itemdelimiter to slash
-   put item -1 of oldRemote into shortFile
-   put "https://github.com/LiveCodeWorld/" & shortFile into newRemoteURL
-   --
-   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
-   return remoteURL
-end _AskRemote
-
-
 --> Menu | Init
 -
 local LocalArray
@@ -75,6 +56,39 @@ end disabled_DisplayGithubInfo
 on mouseDoubleUp_GitHub indexView, lcwRepoName
    github_Launch lcwRepoName
 end mouseDoubleUp_GitHub
+
+
+--> Working on
+-
+private command _AskSetGitRemote projectName
+   put LocalArray ["gitFolder"] into gitFolder
+   put _AskRemote (gitFolder) into remoteURL
+   --
+   put "git remote set-url origin" && remoteURL into someShell
+   git_ExecuteShell someShell, gitFolder
+   if the result is not empty then
+      put the result
+      breakpoint
+   end if
+   --
+   display_GitProjectStatus projectName
+end _AskSetGitRemote
+
+private function _AskRemote gitFolder
+   get git_GetRemote (gitFolder)
+   put line 1 of it into oldRemote
+   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
+   delete word 1 of it
+   delete word -1 of it
+   put word 1 to -1 of it into oldRemote
+   --
+   set the itemdelimiter to slash
+   put item -1 of oldRemote into shortFile
+   put "https://github.com/LiveCodeWorld/" & shortFile into newRemoteURL
+   --
+   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
+   return remoteURL
+end _AskRemote
 
 
 --> Global | GIT | Init | Menu
@@ -168,19 +182,22 @@ getprop disabled_AddGitRemote [projectName]
    end if
 end disabled_AddGitRemote
 
-on menu_SetGitRemote projectName
+getprop disabled_FixGitRemote
    put LocalArray ["gitFolder"] into gitFolder
-   --
-   put _AskRemote (gitFolder) into remoteURL
-   --
-   put "git remote set-url origin" && remoteURL into someShell
-   git_ExecuteShell someShell, gitFolder
-   if the result is not empty then
-      put the result
-      breakpoint
+   get git_GetRemote (gitFolder)
+   if it begins with "origin	git@" then
+      return false
+   else
+      return true
    end if
-   --
-   display_GitProjectStatus projectName
+end disabled_FixGitRemote
+
+on menu_FixGitRemote projectName
+   _AskSetGitRemote projectName
+end menu_FixGitRemote
+
+on menu_SetGitRemote projectName
+   _AskSetGitRemote projectName
 end menu_SetGitRemote
 
 on menu_AddGitRemote projectName
@@ -196,14 +213,34 @@ on menu_AddGitRemote projectName
    display_GitProjectStatus projectName
 end menu_AddGitRemote
 
+private command ___
+end ___
+
 on menu_FirstPush projectName
+   breakpoint
+   -- For a project which has never been pushed to GitHub
+   -- Remote must have been set up
    put LocalArray ["gitFolder"] into gitFolder
    --
    git_FirstPush gitFolder
    if the result is not empty then
       put the result
-      breakpoint
    end if
    --
    display_GitProjectStatus projectName
 end menu_FirstPush
+
+on menu_GithubAuth
+   put "gh auth login" into someShell
+   --
+   -- put shell (someShell)
+   terminal_PasteInNewTab someShell
+end menu_GithubAuth
+
+on menu_InstallGithubTool
+   -- https://github.com/cli/cli#installation
+   put "brew install gh" into someShell
+   --
+   -- put shell (someShell)
+   terminal_PasteInNewTab someShell
+end menu_InstallGithubTool

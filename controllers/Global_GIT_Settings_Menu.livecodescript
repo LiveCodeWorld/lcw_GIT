@@ -89,6 +89,32 @@ function text_LineEndingPlatform someText
 end text_LineEndingPlatform
 
 
+--> Working on
+-
+private function _AskRemote gitFolder, pOrgName
+   if pOrgName is empty then put "LiveCodeWorld" into pOrgName
+   --
+   put _GetOldRemoteShortFile (gitFolder) into shortFile
+   put merge ("https://github.com/[[pOrgName]]/") & shortFile into newRemoteURL
+   --
+   put lcw_Ask("Provide Github. https url:", newRemoteURL) into remoteURL
+   return remoteURL
+end _AskRemote
+
+private function _GetOldRemoteShortFile gitFolder
+   get git_GetRemote (gitFolder)
+   put line 1 of it into oldRemote
+   -- origin	https://github.com/LiveCodeWorld/lcw_Learn.git (fetch)
+   delete word 1 of it
+   delete word -1 of it
+   put word 1 to -1 of it into oldRemote
+   --
+   set the itemdelimiter to slash
+   put item -1 of oldRemote into shortFile
+   return shortFile
+end _GetOldRemoteShortFile
+
+
 --> Global | GIT | Settings | Menu
 -
 on menu_Documentation projectFolder, whichDoc
@@ -102,11 +128,20 @@ on menu_Documentation projectFolder, whichDoc
 end menu_Documentation
 
 on menu_SetRemote projectFolder, orgNamme
-   breakpoint
+   put _AskRemote (projectFolder) into remoteURL
+   --
+   put "git remote set-url origin" && remoteURL into someShell
+   git_ExecuteShell someShell, projectFolder
+   if the result is not empty then
+      put the result
+   end if
+   --
+   display_GitFolderStatus projectFolder
+   display_GitLocalConfig projectFolder
 end menu_SetRemote
 
 on menu_DisplayLocalConfig projectFolder
-   display_GitConfig projectFolder
+   display_GitLocalConfig projectFolder
 end menu_DisplayLocalConfig
 
 on menu_DisplayGlobalConfig

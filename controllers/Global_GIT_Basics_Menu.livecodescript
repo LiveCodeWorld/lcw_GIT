@@ -12,36 +12,6 @@ that allow access to other tools and are not too slow to draw the menus necessar
 */
 
 
---> Working on
--
--- getprop disabled_AddAllUntracked
-   if _LocalValue ("gitFolder") is empty then return true
-   put _FilesToAdd() into untrackedFiles
-   if untrackedFiles is empty then
-      return true
-   else
-      return false
-   end if
-end disabled_AddAllUntracked
-
--- getprop disabled_StageThenCommit
-   if _LocalValue ("gitFolder") is empty then return true
-   if _FilesToAdd() is not empty then return true
-   
-   if _FilesToStageAndCommit() then
-      return false
-   else
-      return true
-   end if
-end disabled_StageThenCommit
-
-private function _FilesToAdd
-   put _LocalValue ("statusArray") into statusArray
-   put statusArray ["Untracked files:"]["files"] into untrackedFileList
-   return untrackedFileList
-end _FilesToAdd
-
-
 --> Menu | Props
 -
 local LocalArray
@@ -54,6 +24,7 @@ end menu_Target
 private command _InitLocalArray tObject
    put the display_View of tObject into dView
    put the git_SettingsModel of dView into LocalArray
+   put dView into LocalArray ["displayView"]
    return dView
 end _InitLocalArray
 
@@ -61,20 +32,60 @@ private function _LocalValue someKey
    return LocalArray [someKey]
 end _LocalValue
 
+
+--> Working on
+-
+-- getprop disabled_AddAllUntracked
+if _LocalValue ("gitFolder") is empty then return true
+put _FilesToAdd() into untrackedFiles
+if untrackedFiles is empty then
+   return true
+else
+   return false
+end if
+end disabled_AddAllUntracked
+
+-- getprop disabled_StageThenCommit
+if _LocalValue ("gitFolder") is empty then return true
+if _FilesToAdd() is not empty then return true
+
+if _FilesToStageAndCommit() then
+   return false
+else
+   return true
+end if
+end disabled_StageThenCommit
+
+private function _FilesToAdd
+   put _StatusArray() into statusArray
+   put statusArray ["Untracked files:"]["files"] into untrackedFileList
+   return untrackedFileList
+end _FilesToAdd
+
+private function _StatusArray
+   put _LocalValue ("statusArray") into statusArray
+   if statusArray is empty then
+      put _LocalValue ("displayView") into displayView
+      put the displayed_Data of displayView into statusArray
+      put statusArray into LocalArray ["statusArray"]
+   end if
+   return statusArray
+end _StatusArray
+
 getprop gitDocumentation_Params
    return the hkey_CaseConditions ["M menu_GitDocumentation"] of me
 end gitDocumentation_Params
 
 -- getprop disabled_Pull
-   return _LocalValue ("gitRemoteAddress") is empty
+return _LocalValue ("gitRemoteAddress") is empty
 end disabled_Pull
 
 --  getprop disabled_PushCurrentBranch
-   return _LocalValue ("gitRemoteAddress") is empty
+return _LocalValue ("gitRemoteAddress") is empty
 end disabled_PushCurrentBranch
 
-getprop disabled_PushCurrentBranch
-   put _LocalValue ("statusArray") into statusArray
+getprop disabled_PushCurrentBranch [gitFolder]
+   put _StatusArray() into statusArray
    put statusArray ["Branch"] into branchArray
    put "(use 'git push' to publish your local commits)" into pushLine
    replace "'" with quote in pushLine

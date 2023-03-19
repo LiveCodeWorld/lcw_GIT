@@ -193,9 +193,6 @@ on menu_SaveAndRefresh
    _RefreshGitFolderStatus
 end menu_SaveAndRefresh
 
-
---> Dev | Menu
--
 on menu_GoToStack arrayView
    put _getFile (arrayView) into someFile
    go to stack someFile
@@ -206,12 +203,25 @@ on menu_EditFile arrayView
    atom_DisplayFile someFile
 end menu_EditFile
 
+on menu_DeleteFile dView
+   put _getFile (dView) into someFile
+   if there is a file someFile then
+      set the itemdelimiter to slash
+      put item -1 of someFile into shortFile
+      --
+      lcw_Answer "Delete file [[shortFile]]", dView, shortFile
+      --
+      revDeleteFile someFile
+      --
+      _RefreshGitFolderStatus
+   else
+      breakpoint
+      finder_RevealFileOrFolder someFile
+   end if
+end menu_DeleteFile
+
 on _
 end _
-
-on menu_StashChanges
-   breakpoint
-end menu_StashChanges
 
 on menu_StageAllChanges
    -- git_AddChanged
