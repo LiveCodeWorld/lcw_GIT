@@ -38,6 +38,14 @@ end menu_RefreshDisplay
 on ___
 end ___
 
+on menu_OpenInTerminal dView
+   put the git_SettingsModel of dView into sModel
+   put sModel ["gitFolder"] into gitFolder
+   --
+   put "cd" && kwote (gitFolder, "'") &CR& "git status" into someShell
+   terminal_DoShell someShell, true
+end menu_OpenInTerminal
+
 on menu_TestGitStatus dView
    put the git_SettingsModel of dView into sModel
    put sModel ["gitFolder"] into gitFolder

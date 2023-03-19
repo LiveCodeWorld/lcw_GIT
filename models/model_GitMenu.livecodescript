@@ -41,6 +41,12 @@ function github_ListOrgs pForce
    return orgNames
 end github_ListOrgs
 
+private function _ListOrgs
+   put LocalArray ["orgsData"] into orgsData
+   put github_ConstructOrgIndex (orgsData) into orgNames
+   return orgNames
+end _ListOrgs
+
 function github_FindOrgArray orgName, orgsData
    repeat with itemNum = 1 to item 2 of the extents of orgsData
       put orgsData [itemNum] into orgArray
@@ -162,12 +168,3 @@ function git_ConstructMenuModel dView, projectName, pOrgName
    
    return cArray
 end git_ConstructMenuModel
-
-
---> Private
--
-private function _ListOrgs
-   put LocalArray ["orgsData"] into orgsData
-   put github_ConstructOrgIndex (orgsData) into orgNames
-   return orgNames
-end _ListOrgs

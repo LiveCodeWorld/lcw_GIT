@@ -51,12 +51,13 @@ command display_GitLocalConfig gitFolder
 end display_GitLocalConfig
 
 command display_GitHubOrgs
-   put github_OrgsData (true) into orgsData
-   put github_ConstructOrgIndex (orgsData) into orgNames
+   put github_ListMyOrgs() into orgNames
    --
    display_Tools orgNames, "My", "Github | Orgs", "Github Orgs", "lcw_Github"
    put the result into displayView
    --
+   put github_OrgsData (true) into orgsData
+   -- put github_ConstructOrgIndex (orgsData) into orgNames
    set the displayed_OrgsData of displayView to orgsData
    --
    return displayView
@@ -70,6 +71,28 @@ end display_GitHubInfo
 
 --> Display | LCW | Projects
 -
+command display_GithubOrgRepos pOrgName
+   -- Same as "display_GithubProjects" ?
+   -- https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-organization-repositories
+   if pOrgName is empty then put "LiveCodeWorld" into pOrgName
+   
+   put github_ListOrgRepos (pOrgName) into repoNames
+   sort repoNames
+   --
+   display_Tools repoNames, pOrgName, "LCW | Projects", "Github Org Repos", "lcw_Github"
+   put the result into displayView
+   
+   # Colout local and missing projects
+   lock screen
+   put env_ListLocalProjects() into localProjects
+   put github_ListMissingLocalRepos() into missingRepoNames
+   set the coloured_Lines ["dark green"] of displayView to localProjects
+   set the coloured_Lines ["orange"] of displayView to missingRepoNames
+   unlock screen
+   --
+   return displayView
+end display_GithubOrgRepos
+
 command display_GithubProjects pOrgName
    if pOrgName is empty then put "LiveCodeWorld" into pOrgName
    --

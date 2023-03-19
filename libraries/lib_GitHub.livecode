@@ -15,6 +15,76 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
+private command _SetAuthHeaders
+   /*
+   gh api --header 'Accept: application/vnd.github+json' --header 'X-GitHub-Api-Version:2022-11-28' --method GET /octocat
+   */
+   
+   put github_GetApiToken() into gitHubApiToken
+   --
+   -- put "Accept: application/vnd.github.v3+json" into someHeader
+   put "Accept: application/vnd.github+json" into someHeader
+   put CR & "X-GitHub-Api-Version:2022-11-28" after someHeader
+   --
+   put CR & "Authorization: Bearer" && gitHubApiToken after someHeader
+   put CR & "User-Agent: OPN" after someHeader
+   set the httpheaders to someHeader
+end _SetAuthHeaders
+
+
+--> GitHub | Orgs
+-
+function github_ListOrgRepos pOrgName
+   put github_FetchOrgReposData (pOrgName) into rData
+   --
+   repeat with itemNum = 1 to item 2 of the extents of rData
+      put rData [itemNum]["name"] & CR after nameIndex
+   end repeat
+   delete char -1 of nameIndex
+   return nameIndex
+end github_ListOrgRepos
+
+function github_FetchOrgReposData pOrgName
+   /*
+   -- https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-organization-repositories
+   
+   curl -L \
+         -H "Accept: application/vnd.github+json" \
+         -H "Authorization: Bearer <YOUR-TOKEN>"\
+         -H "X-GitHub-Api-Version: 2022-11-28" \
+         https://api.github.com/orgs/ORG/repos
+   */
+   if pOrgName is empty then put "LiveCodeWorld" into pOrgName
+   --
+   put merge ("orgs/[[pOrgName]]/repos") into restPath
+   put github_RestGetData (restPath) into orgRepoData
+   return orgRepoData
+end github_FetchOrgReposData
+
+function github_ListMyOrgs
+   put github_ListMyOrgsData() into rArray
+   repeat with itemNum = 1 to item 2 of the extents of rArray
+      put rArray [itemNum]["login"] & CR after loginIndex
+   end repeat
+   delete char -1 of loginIndex
+   return loginIndex
+end github_ListMyOrgs
+
+function github_ListMyOrgsData
+   put github_RestGet ("/user/orgs") into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_ListMyOrgsData
+
+function github_ListOrgArray
+   put github_RestGet ("organizations") into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_ListOrgArray
+
+
+--> GitHub | Create
+-
 command github_CreateProject repoName, gitFolder, repoDescription
    -- First Create a new GitHub repo
    github_CreateOrgRepo repoName, repoDescription
@@ -88,6 +158,10 @@ function github_GetApiToken
    return gitHubApiToken
 end github_GetApiToken
 
+command github_SetApiToken gitHubApiToken
+   secret_Set "github_GetApiToken", gitHubApiToken
+end github_SetApiToken
+
 function gitHub_OldApiToken
    put "GitHubAuthoringToken" into prefName -- "GitHubApiToken"
    put pref_GetValue (prefName) into gitHubApiToken
@@ -97,10 +171,6 @@ function gitHub_OldApiToken
    end if
    return gitHubApiToken
 end gitHub_OldApiToken
-
-command github_SetApiToken gitHubApiToken
-   pref_SetValue "GitHubApiToken", gitHubApiToken
-end github_SetApiToken
 
 
 --> GitHub | URL
@@ -534,21 +604,6 @@ function github_ListOrgIssues someOrg
 end github_ListOrgIssues
 
 
---> GitHub | Orgs
--
-function github_ListMyOrgsData
-   put github_RestGet ("/user/orgs") into rJSON
-   put json_ToArray (rJSON) into rArray
-   return rArray
-end github_ListMyOrgsData
-
-function github_ListOrgArray
-   put github_RestGet ("organizations") into rJSON
-   put json_ToArray (rJSON) into rArray
-   return rArray
-end github_ListOrgArray
-
-
 --> GitHub | Repos
 -
 command github_CreateOrgRepo rName, rDesc, pOrgName, pHomePage
@@ -686,14 +741,6 @@ private function _constructApiUrl restPath
    
    return someUrl
 end _constructApiUrl
-
-private command _setAuthHeaders
-   put github_GetApiToken() into gitHubApiToken
-   put "Accept: application/vnd.github.v3+json" into someHeader
-   put CR & "Authorization: token" && gitHubApiToken after someHeader
-   put CR & "User-Agent: OPN" after someHeader
-   set the httpheaders to someHeader
-end _setAuthHeaders
 
 
 --> Deps
