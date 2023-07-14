@@ -14,6 +14,26 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working on
 -
+function git_ListNotUpToDate
+   put env_ListLocalProjects() into projectNames
+   repeat for each line projectName in projectNames
+      set the cursor to busy
+      put env_ConstructHomePath (projectName) into homeStackPath
+      if exists (stack homeStackPath) is false then
+         breakpoint
+         next repeat
+      end if
+      put the project_Folder of stack homeStackPath into gitFolder
+      put git_IsUpToDate (gitFolder) into isUpToDate
+      --
+      if isUpToDate is false then
+         put projectName & CR after needsUpdating
+      end if
+   end repeat
+   delete char -1 of needsUpdating
+   return needsUpdating
+end git_ListNotUpToDate
+
 on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    put the selected_Path of arrayView into sPath
    --
