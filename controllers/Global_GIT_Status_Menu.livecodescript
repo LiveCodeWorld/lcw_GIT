@@ -35,9 +35,6 @@ on menu_RefreshDisplay displayView
    display_GitRefreshProjectName projectName
 end menu_RefreshDisplay
 
-on ___
-end ___
-
 on menu_OpenInTerminal dView
    put the git_SettingsModel of dView into sModel
    put sModel ["gitFolder"] into gitFolder
@@ -46,16 +43,12 @@ on menu_OpenInTerminal dView
    terminal_DoShell someShell, true
 end menu_OpenInTerminal
 
-on menu_TestGitStatus dView
-   put the git_SettingsModel of dView into sModel
-   put sModel ["gitFolder"] into gitFolder
-   --
-   put git_IsUpToDate (gitFolder)
-end menu_TestGitStatus
+on ___
+end ___
 
-on menu_TestExpanded displayView
-   put the expanded_Paths of displayView
-end menu_TestExpanded
+on submenu_Test
+   return menu_DevTitle("Global | GIT | Status | Menu")
+end submenu_Test
 
 on submenu_Dev
    return menu_Create ("Global | GIT | Dev | Menu")

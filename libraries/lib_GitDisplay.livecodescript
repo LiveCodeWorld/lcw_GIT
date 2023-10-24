@@ -4,16 +4,96 @@
 license: GPLv3
 name: lib_GitDisplay
 type: library
-version: 0.3
+version: 0.4
 
 /*
 A library for working with GIT.
-It has not been tested on unix (should work fine), or Windows machines (beware of line ending issues).
 */
 
 
 --> Working on
 -
+-- on saveStackRequest
+put the long id of the target into cardObject
+
+## Update the Git Status displays
+git_UpdateDisplays cardObject
+end saveStackRequest
+
+getprop git_DisplayView
+   local gitShortFolder, displayView
+   put the long id of the target into tObject
+   _SetShortFolderDisplayView tObject, gitShortFolder, displayView
+   return displayView
+end git_DisplayView
+
+private command _SetShortFolderDisplayView tObject, @gitShortFolder, @displayView
+   put the git_ShortFolder of tObject into gitShortFolder
+   --
+   if gitShortFolder is empty then
+      put empty into displayView
+   else
+      put display_FindView ("Git Status", gitShortFolder) into displayView
+   end if
+end _SetShortFolderDisplayView
+
+command git_RefreshDisplay arrayView
+   -- put the git_Folder of arrayView into gitFolder
+   put the git_SettingsModel of arrayView into sModel
+   put sModel ["gitFolder"] into gitFolder
+   if there is not a folder gitFolder then return empty
+   --
+   put git_FetchStatusArray (gitFolder) into statusArray
+   set the displayed_Data of arrayView to statusArray
+   return statusArray
+end git_RefreshDisplay
+   
+command git_UpdateDisplays pObject
+   if exists (pObject) is false then 
+      put git_ListDisplayViews() into arrayViews
+      repeat for each line arrayView in arrayViews
+         git_RefreshDisplay arrayView
+      end repeat
+   else
+      ## Update the Git Status displays
+      -- put the git_DisplayView of pObject into displayView
+      _SetShortFolderDisplayView pObject, gitShortFolder, displayView
+      if exists (displayView)  then
+         display_GitRefreshProjectName gitShortFolder
+      end if
+   end if
+end git_UpdateDisplays
+
+command display_GitRefreshProjectName projectName
+   -- works even if project is not loaded based on standard file names
+   put env_ConstructHomePath (projectName) into homeStackPath
+   put display_FindView ("Git Status", projectName) into gitDisplayView
+   --
+   switch
+      case exists (gitDisplayView) is false
+         return "Error, there is no 'Git Staus' display for project '[[asdf]]'. Doing nothing."
+      case there is a stack projectName
+         put the git_Folder of stack projectName into gitFolder
+         display_GitFolderStatus gitFolder
+         put the result into displayView
+         return displayView
+      case there is a stack homeStackPath
+         put git_GetCheckoutFolder (homeStackPath) into gitFolder
+         display_GitFolderStatus gitFolder
+         put the result into displayView
+         return displayView
+      default
+         return "Error, project '[[projectName]]' does not exist."
+   end switch
+end display_GitRefreshProjectName
+
+function git_ListDisplayViews
+   -- put display_FindView ("Git Status") into displayViews
+   -- put stack_FindNames ("Git Status") into sNames
+   put display_ListLabeled ("Git Status", "View|Tree|Widget with Title,View|Index") into arrayViews
+   return arrayViews
+end git_ListDisplayViews
+
 function git_ListNotUpToDate
    put env_ListLocalProjects() into projectNames
    repeat for each line projectName in projectNames
@@ -45,19 +125,21 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
    --
    text_AddTrailing gitFolder, slash
    put gitFolder & shortFileOrFolder into fileOrFolder
+   get item 1 of sPath
    switch
-      case item 1 of sPath = "Changes not staged for commit:"
+      case it = "Changes not staged for commit:"
          if the shiftKey is "Down" then
             git_StageThenCommit gitFolder
             --
             set the expanded_Paths [true] of arrayView to "Branch"
          end if
          break
-      case item 1 of sPath = "Changes to be committed:"
+      case it = "Changes to be committed:"
          if the shiftKey is "Down" then
             git_StageThenCommit gitFolder
          end if
-      case item 1 of sPath = "Untracked files:"
+         break
+      case it = "Untracked files:"
          if the shiftKey is "Down" then
             set the cursor to watch
             git_AddEverything gitFolder
@@ -70,7 +152,12 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
          break
       case shortFileOrFolder = pushLine
          display_GitPushCurrentBranch gitFolder
-         return the result
+         --
+         put the title_Text of arrayView into projectName
+         put display_FindView ("Environment", "Not Up-to-Date") into dView
+         if exists (dView) then
+            set the deleted_Line of dView to projectName
+         end if
          break
       case there is a stack fileOrFolder
          if the scriptonly of stack fileOrFolder is true then
@@ -87,24 +174,6 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
          break
    end switch
 end mDoubleUp_DisplayGitFile
-
-
---> Events
--
-on saveStackRequest
-   -- update the Git Status displays
-   put the long id of the target into cardObject
-   put the git_ShortFolder of cardObject into gitShortFolder
-   if gitShortFolder is empty then pass saveStackRequest -- or the stack won't be saved
-   --
-   put display_FindView ("Git Status", gitShortFolder) into displayView
-   if displayView is not empty then
-      -- display_GitRefreshProjectName gitShortFolder
-      send "display_GitRefreshProjectName gitShortFolder" to me in 20 ticks -- display after saving
-   end if
-   --
-   pass saveStackRequest -- or the stack won't be saved
-end saveStackRequest
 
 
 --> Git | UpToDate
@@ -361,29 +430,6 @@ command display_GitProjectStatus projectName
    display_GitFolderStatus gitFolder
    return gitFolder
 end display_GitProjectStatus
-
-command display_GitRefreshProjectName projectName
-   -- works even if project is not loaded based on standard file names
-   put env_ConstructHomePath (projectName) into homeStackPath
-   put display_FindView ("Git Status", projectName) into gitDisplayView
-   --
-   switch
-      case exists (gitDisplayView) is false
-         return "Error, there is no 'Git Staus' display for project '[[asdf]]'. Doing nothing."
-      case there is a stack projectName
-         put the git_Folder of stack projectName into gitFolder
-         display_GitFolderStatus gitFolder
-         put the result into displayView
-         return displayView
-      case there is a stack homeStackPath
-         put git_GetCheckoutFolder (homeStackPath) into gitFolder
-         display_GitFolderStatus gitFolder
-         put the result into displayView
-         return displayView
-      default
-         return "Error, project '[[projectName]]' does not exist."
-   end switch
-end display_GitRefreshProjectName
 
 command display_GitProjectStatus projectName
    put project_GetFolder (projectName) into projectFolder
