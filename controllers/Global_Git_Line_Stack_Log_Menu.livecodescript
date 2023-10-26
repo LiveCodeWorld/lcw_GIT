@@ -4,12 +4,14 @@
 license: GPLv3
 name: Global | Git | Line | Stack | Log | Menu
 type: controller
+author: David Bovill
 version: 0.2
 
 
 --> Variables
 -
 local LocalArray
+
 
 --> Menu | Props
 -
@@ -138,3 +140,4 @@ on _DiffStackBinaries stackObject
    
    diff_Files thisFile, toFile
 end _DiffStackBinaries
+

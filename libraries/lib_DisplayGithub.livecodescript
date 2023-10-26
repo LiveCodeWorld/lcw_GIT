@@ -12,6 +12,19 @@ version: 0.1
 
 --> Working on
 -
+function github_ConstructPageArray readmeMarkdown, pageTitle
+   -- fedwiki_ConvertGitHubReadme
+   put wiki_Merge ("On this page we describe the [[Github]] project {{githubProjectName}}.") into firstPara
+   --
+   put pageArray_Construct (pageTitle, firstPara) into pageArray
+   pageArray_AddMarkdown pageArray, readmeMarkdown
+   pageArray_AddMarkdown pageArray, "# See also"
+   pageArray_AddMarkdown pageArray, "- [[Github]]"
+   --
+   pageArray_CleanJournal pageArray
+   return pageArray
+end github_ConstructPageArray
+
 command display_GitGlobalConfig 
    # Shell at home
    put "git config --list" into someShell

@@ -4,25 +4,21 @@
 license: GPLv3
 name: Global | GIT | Menu
 type: controller
-version: 0.2
+version: 0.3
 
-/*As the general git menu, this probably should not have a scriptObject as the menu_Target
+/*
+As the general git menu, this probably should not have a scriptObject as the menu_Target
 becasue it will be displayed by the standard project menu interface.
-Change to indexView or make it clever.*/
-
+Change to indexView or make it clever.
+*/
 
 --> Menu | Init
 -
 local LocalArray
 
-on menu_Init
+getprop menu_Target [tObject]
    put scriptEditor_Object() into sObject
    put sObject into LocalArray ["sObject"]
-end menu_Init
-
-getprop menu_Target [tObject]
-   -- not called on submenus :(
-   put LocalArray ["sObject"] into sObject
    return sObject
 end menu_Target
 

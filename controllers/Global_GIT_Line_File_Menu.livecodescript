@@ -24,10 +24,6 @@ getprop menu_Target [tObject]
    return dView
 end menu_Target
 
-private function _LocalValue someKey
-   return LocalArray [someKey]
-end _LocalValue
-
 getprop disabled_Branch [arrayView]
    if LocalArray ["topKey"] = "Branch" then
       return false
@@ -139,6 +135,12 @@ private function _GetFile displayView
    return someFile
 end _GetFile
 
+private command _RefreshGitFolderStatus
+   put LocalArray ["displayView"] into displayView
+   put LocalArray ["gitFolder"] into gitFolder
+   display_GitFolderStatus gitFolder, displayView
+end _RefreshGitFolderStatus
+
 
 --> Global | GIT | Line | File | Menu
 -
@@ -146,7 +148,7 @@ on submenu_Branch
    return "Global | GIT | Branch | Menu"
 end submenu_Branch
 
-on _
+private command _
 end _
 
 on menu_StageThenCommit arrayView
@@ -160,8 +162,8 @@ on menu_StageThenCommit arrayView
    _RefreshGitFolderStatus
 end menu_StageThenCommit
 
-on _
-end _
+private command __
+end __
 
 on menu_AddUntrackedFile displayView
    put _GetFile (displayView) into someFile
@@ -184,8 +186,8 @@ on menu_AddAllUntracked arrayView
    _RefreshGitFolderStatus
 end menu_AddAllUntracked
 
-on _
-end _
+private command ___
+end ___
 
 on menu_SaveAndRefresh
    stack_SaveEdited "all"
@@ -220,8 +222,8 @@ on menu_DeleteFile dView
    end if
 end menu_DeleteFile
 
-on _
-end _
+private command ____
+end ____
 
 on menu_StageAllChanges
    -- git_AddChanged
@@ -233,18 +235,7 @@ on menu_StageAllChanges
    _RefreshGitFolderStatus
 end menu_StageAllChanges
 
+on submenu_Dev
+   return menu_DevTitle ("Global | GIT | Line | File | Menu")
+end submenu_Dev
 
---> Private
--
-private command _RefreshGitFolderStatus
-   put LocalArray ["displayView"] into displayView
-   put LocalArray ["gitFolder"] into gitFolder
-   display_GitFolderStatus gitFolder, displayView
-end _RefreshGitFolderStatus
-
-private function _getFile arrayView
-   put the selected_Value of arrayView into relativeFile
-   put LocalArray ["gitCheckoutFolder"] into gitCheckoutFolder
-   put gitCheckoutFolder & relativeFile into someFile
-   return someFile
-end _getFile

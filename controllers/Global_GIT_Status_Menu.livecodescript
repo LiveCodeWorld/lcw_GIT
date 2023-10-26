@@ -47,9 +47,10 @@ on ___
 end ___
 
 on submenu_Test
-   return menu_DevTitle("Global | GIT | Status | Menu")
+   return menu_DevTitle ("Global | GIT | Status | Menu")
 end submenu_Test
 
 on submenu_Dev
    return menu_Create ("Global | GIT | Dev | Menu")
 end submenu_Dev
+

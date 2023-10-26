@@ -4,12 +4,11 @@
 license: GPLv3
 name: lib_GitDisplay
 type: library
-version: 0.4
+version: 0.6
 
 /*
 A library for working with GIT.
 */
-
 
 --> Working on
 -
@@ -47,7 +46,7 @@ command git_RefreshDisplay arrayView
    set the displayed_Data of arrayView to statusArray
    return statusArray
 end git_RefreshDisplay
-   
+
 command git_UpdateDisplays pObject
    if exists (pObject) is false then 
       put git_ListDisplayViews() into arrayViews
@@ -88,9 +87,7 @@ command display_GitRefreshProjectName projectName
 end display_GitRefreshProjectName
 
 function git_ListDisplayViews
-   -- put display_FindView ("Git Status") into displayViews
-   -- put stack_FindNames ("Git Status") into sNames
-   put display_ListLabeled ("Git Status", "View|Tree|Widget with Title,View|Index") into arrayViews
+   put display_List ("View|Tree|Widget with Title,View|Index", "Git Status") into arrayViews
    return arrayViews
 end git_ListDisplayViews
 
@@ -136,7 +133,7 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
          break
       case it = "Changes to be committed:"
          if the shiftKey is "Down" then
-            git_StageThenCommit gitFolder
+            git_StageThenCommit gitFolder, "Branch"
          end if
          break
       case it = "Untracked files:"
@@ -147,7 +144,7 @@ on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
             if shellResult is not empty then
                lcw_Notify shellResult
             end if
-            display_GitFolderStatus gitFolder
+            display_GitFolderStatus gitFolder, "Changes not staged for commit:,Changes to be committed:"
          end if
          break
       case shortFileOrFolder = pushLine
@@ -222,14 +219,6 @@ command git_AskInit projectName, displayView
       breakpoint
    end if
 end git_AskInit
-
-command git_StageThenCommit gitFolder
-   put lcw_Ask ("Comment on this change...", "Minor changes") into someComment
-   git_CommitChanges someComment, gitFolder
-   put the result into gitResult
-   display_GitFolderStatus gitFolder
-   return gitResult
-end git_StageThenCommit
 
 command ask_PushGithub sObject, pQuestion, pForce
    if pForce is not true AND the git_IsCommitted of sObject is true then return empty
@@ -435,7 +424,8 @@ command display_GitProjectStatus projectName
    put project_GetFolder (projectName) into projectFolder
    if there is not a folder projectFolder then
       if projectFolder is not empty then put projectFolder
-      answer warning merge ("Cannot locate a folder for project '[[projectName]]'!")
+      put "Cannot locate a folder for project" && kwote(projectName) & "!" into sComment
+      answer warning merge (sComment)
       breakpoint
       exit to top
    end if
@@ -444,6 +434,14 @@ command display_GitProjectStatus projectName
    put the result into displayView
    return displayView
 end display_GitProjectStatus
+
+command git_StageThenCommit gitFolder, pExpandedItems
+   put lcw_Ask ("Comment on this change...", "Minor changes") into someComment
+   git_CommitChanges someComment, gitFolder
+   put the result into gitResult
+   display_GitFolderStatus gitFolder, pExpandedItems
+   return gitResult
+end git_StageThenCommit
 
 command display_GitFolderStatus gitFolder, pExpandedItems
    if there is not a folder gitFolder then return empty
@@ -474,6 +472,7 @@ command display_GitFolderStatus gitFolder, pExpandedItems
    # Work out folded
    if pExpandedItems is not empty then
       -- sensitive to capitalisation
+      -- set the expanded_Paths [true] of displayView to pExpandedItems
       put display_ConstructFoldState (pExpandedItems) into foldedArray
       set the fold_State [true] of displayView to foldedArray
    end if
@@ -862,5 +861,3 @@ getprop git_TreeField
    put _GitTreeView() into gitTreeView
    return the tree_Field of gitTreeView
 end git_TreeField
-
-

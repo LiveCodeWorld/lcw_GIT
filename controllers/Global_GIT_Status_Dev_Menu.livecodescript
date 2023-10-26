@@ -5,7 +5,7 @@ license: GPLv3
 name: Global | GIT | Status | Dev | Menu
 type: controller
 author: David Bovill
-version: 0.1
+version: 0.2
 
 /*
 Here you can describe this menu.
@@ -118,5 +118,3 @@ on menu_OtherStackLog scriptObject, someName
    put the name of stack someName into stackObject
    display_StackHistory stackObject
 end menu_OtherStackLog
-
-

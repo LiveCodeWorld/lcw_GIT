@@ -4,12 +4,39 @@
 license: GPLv3
 name: Global | Git | Log | Menu
 type: controller
-version: 0.1
+version: 0.2
+
+
+--> Variables
+-
+local LocalArray
+
+--> Menu | Props
+-
+getprop menu_Target [tObject]
+   put the display_View of tObject into dView
+   put the git_SettingsModel of dView into LocalArray
+   
+   put the hilited_Lines of dView into lineNum
+   put the log_Array of dView into logArray
+   put logArray [lineNum]["commitHash"] into commitHash
+   put commitHash into LocalArray ["commitHash"]
+   
+   return dView
+end menu_Target
+
+private function _getSelectedCommitHash
+   return LocalArray ["commitHash"]
+end _getSelectedCommitHash
+
+getprop disabled_CompareObjectScriptWithNow [treeField]
+   put the displayed_Object of treeField into someObject
+   return someObject is empty
+end disabled_CompareObjectScriptWithNow
 
 
 --> Global | Git | Log | Menu
 -
--- Global | Git | Log | Menu
 on menu_CompareObjectScriptWithNow scriptObject
    -- put the displayed_Object of treeField into someObject
    --  put the tree_SelectedLink of treeField into commitHash
@@ -52,19 +79,3 @@ on submenu_Dev
    return "Dev | Menu"
 end submenu_Dev
 
-
---> Global | Git | Log | Menu | Props
--
---> Global | Git | Log | Menu | Disabled
--
-getprop disabled_CompareObjectScriptWithNow [treeField]
-   put the displayed_Object of treeField into someObject
-   return someObject is empty
-end disabled_CompareObjectScriptWithNow
-
-
---> Menu | Props
--
-
---> Dev | Menu
--
