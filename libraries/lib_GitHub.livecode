@@ -96,6 +96,7 @@ command github_CreateProject repoName, gitFolder, repoDescription
    put githubProjectArray ["clone_url"] into gitRemoteAddress
    if gitRemoteAddress is empty then
       breakpoint
+      exit to top
    end if
    
    -- we need to add gitRemoteAddress to local folder
