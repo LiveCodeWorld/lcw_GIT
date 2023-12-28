@@ -190,7 +190,7 @@ on menu_DisplayStashFile treeField
       -- set the itemdelimiter to "."
       if there is a stack someFile then
          put the name of stack someFile into stackObject
-         git_DisplayTempStackRevision stackObject, stashName
+         display_GitStackRevision stackObject, stashName
       else
          breakPoint
       end if

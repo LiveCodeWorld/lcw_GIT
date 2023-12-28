@@ -144,9 +144,17 @@ end _RefreshGitFolderStatus
 
 --> Global | GIT | Line | File | Menu
 -
-on submenu_Branch
-   return "Global | GIT | Branch | Menu"
-end submenu_Branch
+on menu_StackHistory dView
+   put _getFile (dView) into stackPath
+   if exists (stack stackPath)  is false then
+      put stackPath
+      lcw_AnswerWarning "Stack does not exist!", dView
+   end if
+   --
+   put the name of stack stackPath into scriptObject
+   --
+   display_StackHistory scriptObject
+end menu_StackHistory
 
 private command _
 end _
@@ -234,6 +242,13 @@ on menu_StageAllChanges
    --
    _RefreshGitFolderStatus
 end menu_StageAllChanges
+
+on submenu_Branch
+   return "Global | GIT | Branch | Menu"
+end submenu_Branch
+
+private command _5
+end _5
 
 on submenu_Dev
    return menu_DevTitle ("Global | GIT | Line | File | Menu")

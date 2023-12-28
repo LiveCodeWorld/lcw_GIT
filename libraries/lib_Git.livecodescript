@@ -12,6 +12,48 @@ A library for working with GIT.
 It has not been tested on unix (should work fine), or Windows machines (beware of line ending issues).
 */
 
+--> Working On
+-
+command git_ExportFileRevision someFile, commitHash, pToFile
+   /*
+   fatal: Path 'libraries/lib_Git.livecodescript' exists, but not 'lib_Git.livecodescript'.
+   Did you mean '53195e09c611ab9ae89d62e996737dbb0e294334:libraries/lib_Git.livecodescript' aka '53195e09c611ab9ae89d62e996737dbb0e294334:./lib_Git.livecodescript'?
+   */
+   
+   # Check Git Folder
+   if there is not a file someFile then
+      breakpoint
+      return empty
+   end if
+   put git_GetCheckoutFolder (someFile) into gitRootFolder
+   if there is not a folder gitRootFolder then
+      breakpoint
+      return empty
+   end if
+   
+   # Relative Paths
+   set the itemdelimiter to slash
+   put item -1 of someFile into shortFile
+   file_SetRelativePath someFile, gitRootFolder
+   
+   # Create Temp Folder
+   if pToFile is empty then
+      set the itemdelimiter to "/"
+      put the tempName & "/" into tempFolder
+      folder_CreateNested tempFolder
+      put tempFolder & shortFile into pToFile
+   end if
+   
+   # Git Show
+   shell_BashParamEscape someFile
+   put "git show" && commitHash & ":" & someFile into someShell
+   put space & ">" && kwote (pToFile) after someShell
+   put git_ExecuteShellCommand (someShell, gitRootFolder) into shellResult
+   
+   return pToFile
+end git_ExportFileRevision
+
+
 --> Props
 -
 getprop git_IsCommitted
@@ -69,7 +111,7 @@ function folder_GetEnclosing someFile
 end folder_GetEnclosing
 
 
---> Working On
+--> Git | Branch
 -
 command git_PushBranch gitFolder, pBranchName
    if pBranchName is empty then
@@ -519,35 +561,6 @@ end git_RevertStack
 
 --> GIT | Export
 -
-command git_ExportFileRevision someFile, commitHash, pToFile
-   /*
-   fatal: Path 'libraries/lib_Git.livecodescript' exists, but not 'lib_Git.livecodescript'.
-   Did you mean '53195e09c611ab9ae89d62e996737dbb0e294334:libraries/lib_Git.livecodescript' aka '53195e09c611ab9ae89d62e996737dbb0e294334:./lib_Git.livecodescript'?
-   */
-   
-   set the itemdelimiter to slash
-   put item -1 of someFile into shortFile
-   -- put someFile into someFolder
-   -- put empty into item -1 of someFolder
-   
-   put checkout_FindRoot (someFile) into gitRootFolder
-   file_SetRelativePath someFile, gitRootFolder
-   
-   if pToFile is empty then
-      set the itemdelimiter to "/"
-      put the tempName & "/" into tempFolder
-      folder_CreateNested tempFolder
-      put tempFolder & shortFile into pToFile
-   end if
-   
-   shell_BashParamEscape someFile
-   put "git show" && commitHash & ":" & someFile into someShell
-   put space & ">" && kwote (pToFile) after someShell
-   
-   put git_ExecuteShellCommand (someShell, gitRootFolder) into shellResult 
-   return pToFile
-end git_ExportFileRevision
-
 command git_RemoveFile someFile
    put "git rm -- [[shortFile]]" into shellTemplate
    git_ExecuteMergedShell shellTemplate, someFile
@@ -1001,7 +1014,7 @@ getprop git_LastCommit
    put the script_File of the target into someFile
    put git_ShowFileHead (someFile) into previousExport
    return previousExport
-end git_LastCommit 
+end git_LastCommit
 
 getprop git_LastScript [pBackNum]
    put the script_File of the target into relativeFile

@@ -10,8 +10,118 @@ version: 0.6
 A library for working with GIT.
 */
 
+--> Junk
+-
+private command _SetSafeStackName stackPath, pSafeName
+   breakpoint
+   # Set the name of a stack to it's unique git revision hash?
+   set lockmessages to true
+   set the name of stack stackPath to pSafeName
+   set lockmessages to false
+end _SetSafeStackName
+
+
 --> Working on
 -
+command display_GitStackRevision someObject, commitHash
+   put the stack_Object of someObject into stackObject
+   put the effective filename of stackObject into thisFile
+   put the short name of stack thisFile into oName
+   
+   if exists (stack thisFile) is false then
+      answer warning "Stack does not exist!"
+      breakpoint
+      exit to top
+   end if
+   
+   # Export Revision
+   git_ExportFileRevision thisFile, commitHash
+   put the result into toFile
+   
+   # Work out safe name
+   -- put "tempStackName" && oName into tempStackName
+   put oName && commitHash into revisionStackName
+   --
+   display_GitStack toFile, revisionStackName
+end display_GitStackRevision
+
+command display_GitStack stackPath, pSafeName 
+   # Rename stack to pSafeName
+   if exists (stack stackPath) is false then
+      put stackPath
+      lcw_AnswerWarning "Problem opening versioned stack!"
+   else
+      set lockmessages to true 
+      put the name of stack stackPath into oName
+      if pSafeName is empty then
+         breakpoint
+         put file_Hash (stackPath) into fHash
+         put oName && fHash into pSafeName
+      end if
+      
+      # Rename the stack
+      set the name of stack stackPath to pSafeName
+      put the result into sError
+      get the name of stack stackPath
+      set lockmessages to false
+      
+      if it is not pSafeName then
+         breakpoint
+         exit to top
+      end if 
+   end if
+   
+   # Open or edit renamed stack
+   if the scriptOnly of stack stackPath is true then
+      display_ScriptOnlyStack stackPath
+   else
+      set the destroystack of stack stackPath to true
+      set the destroywindow of stack stackPath to true
+      --
+      go to stack stackPath   
+   end if
+   return the result
+end display_GitStack
+
+command display_ScriptOnlyStack stackPath
+   breakpoint
+   if exists (stack stackPath) is false then return empty
+   if the scriptOnly of stack stackPath is false then return empty
+   --
+   put the name of stack stackPath into stackObject
+   edit the script of stackObject
+   return stackObject
+end display_ScriptOnlyStack
+
+command launch_ScriptEditor stackPath
+   if there is not a file stackPath then
+      put stackPath into toFolder
+      set the itemdelimiter to slash
+      put empty into item -1 of toFolder
+      finder_Reveal toFolder
+      
+      put stackPath
+      lcw_AnswerWarning "Stack does not exist!"
+   end if
+   
+   atom_DisplayFile stackPath
+end launch_ScriptEditor
+
+command git_DisplayTempStackFromTreeish commitHash, pToFile
+   breakpoint
+   git_ExportFileRevision relativePath, commitHash
+   put the result into toFile
+   
+   set lockmessages to true
+   put the name of stack toFile into oName
+   set the name of stack toFile to (oName && treeish)
+   go to stack toFile
+   set lockmessages to false
+   
+   set the destroystack of stack toFile to true
+   set the destroywindow of stack toFile to true
+end git_DisplayTempStackFromTreeish
+
 -- on saveStackRequest
 put the long id of the target into cardObject
 
@@ -647,81 +757,6 @@ command git_RefreshDisplay pTreeTitle
    end switch
    return someOutline
 end git_RefreshDisplay
-
-
---> Git | Display | Stack
--
-command git_DisplayTempStackRevision someObject, commitHash
-   put the stack_Object of someObject into stackObject
-   put the effective filename of stackObject into thisFile
-   
-   put the short name of stack thisFile into oName
-   
-   if exists (stack thisFile) is false then
-      answer warning "Stack does not exist!"
-      breakpoint
-      exit to top
-   end if
-   
-   set lockmessages to true
-   git_ExportFileRevision thisFile, commitHash
-   put the result into toFile
-   
-   if exists (stack toFile) is false then
-      answer warning "Revision Stack does not exist!"
-      breakpoint
-      
-      put toFile into toFolder
-      set the itemdelimiter to slash
-      put empty into item -1 of toFolder
-      finder_Reveal toFolder
-      
-      atom_DisplayFile toFile
-      exit to top
-   end if
-   
-   put "tempStackName" && oName into tempStackName
-   put oName && commitHash into exportedRevisionName
-   
-   try
-      set lockmessages to true
-      set the name of stack thisFile to tempStackName -- not totally sure this is needed
-      set the name of stack toFile to exportedRevisionName
-      set the name of stack thisFile to oName -- not totally sure this is needed (maybe just keep it as it was). But tricky to debug.
-      set lockmessages to false
-      
-      set the destroystack of stack toFile to true
-      set the destroywindow of stack toFile to true     
-   catch e
-      set the name of stack thisFile to oName
-      
-      answer warning merge ("Problem opening versioned [[stackObject]]!")
-      breakpoint
-      put there is a file toFile into fileExists
-      get url ("binfile:" & toFile)
-      atom_DisplayFile toFile
-      exit to top
-   end try
-   
-   set the label of stack toFile to exportedRevisionName
-   put the name of stack toFile into newStackObject
-   go to stack toFile
-end git_DisplayTempStackRevision
-
-command git_DisplayTempStackFromTreeish commitHash, pToFile
-   breakpoint
-   git_ExportFileRevision relativePath, commitHash
-   put the result into toFile
-   
-   set lockmessages to true
-   put the name of stack toFile into oName
-   set the name of stack toFile to (oName && treeish)
-   go to stack toFile
-   set lockmessages to false
-   
-   set the destroystack of stack toFile to true
-   set the destroywindow of stack toFile to true
-end git_DisplayTempStackFromTreeish
 
 
 --> Display | GIT | Handlers
