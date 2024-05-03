@@ -12,15 +12,82 @@ version: 0.2
 
 --> Working on
 -
+getprop git_RelativeFolder
+   -- relative to GitHub = LivecodeWorld directory (env home)
+   put the git_Folder of the target into gitFolder
+   --
+   put env_GetRepoFolder() into baseFolder
+   file_SetRelativePath gitFolder, baseFolder
+   return gitFolder
+end git_RelativeFolder
+
+getprop git_Folder
+   put the mainstack_File of the target into somePath
+   try
+      -- if git is installed
+      put git_GetCheckoutFolder (somePath) into repoRootFolder
+   catch e
+      put git_FindCheckoutFolder (somePath) into repoRootFolder
+   end try
+   return repoRootFolder
+end git_Folder
+
+function git_FindCheckoutFolder somePath
+   -- slightly faster then "git_GetCheckoutFolder" (2 ticks)
+   put git_FindDotGitFolder (somePath) into checkoutFolder
+   set the itemdelimiter to slash
+   delete item -1 of checkoutFolder
+   return checkoutFolder
+end git_FindCheckoutFolder
+
+function git_GetCheckoutFolder pFolderOrFile
+   -- relies on git installed globallly
+   put the defaultFolder into oFolder
+   if pFolderOrFile is empty then
+      put the defaultFolder into pFolderOrFile
+   else
+      if there is a file pFolderOrFile then
+         set the itemdelimiter to "/"
+         delete item -1 of pFolderOrFile
+      end if
+      set the defaultFolder to pFolderOrFile
+   end if
+   
+   put shell ("git rev-parse --show-cdup") into shellResult
+   
+   set the itemdelimiter to ":"
+   if item 1 of shellResult = "fatal" then
+      set the defaultFolder to oFolder
+      return empty
+   end if
+   
+   put word 1 to -1 of shellResult into someChars
+   put the number of chars of someChars/3 into upCount
+   
+   set the itemdelimiter to "/"
+   put -1 - upCount into minusItem
+   put (item 1 to minusItem of pFolderOrFile) into gitRootFolder
+   put "/" after gitRootFolder
+   
+   set the defaultFolder to oFolder
+   return gitRootFolder
+end git_GetCheckoutFolder
+
+
 --> Git | Folder
 -
 function git_GetRootFolder
+   breakpoint -- not meaningful
    put pref_GetValue ("gitRootFolder") into gitRootFolder
-   if gitRootFolder is empty then put revEnvironmentUserPluginsPath() & "/" into gitRootFolder -- a default
+   if gitRootFolder is empty then
+      -- put revEnvironmentUserPluginsPath() & "/" into gitRootFolder
+      put env_GetRepoFolder() into gitRootFolder
+   end if
    return gitRootFolder
 end git_GetRootFolder
 
 command git_SetRootFolder gitRootFolder
+   breakpoint -- not meaningful
    folder_Format gitRootFolder
    pref_SetValue "gitRootFolder", gitRootFolder
    return the result
@@ -73,81 +140,6 @@ getprop git_Project
    put gitProjectArray [gitRootFolder]["project name"] into projectName
    return projectName
 end git_Project
-
-getprop git_Folder
-   put the mainstack_File of the target into somePath
-   try
-      -- if git is installed
-      put git_GetCheckoutFolder (somePath) into repoRootFolder
-   catch e
-      put git_FindCheckoutFolder (somePath) into repoRootFolder
-   end try
-   return repoRootFolder
-end git_Folder
-
-function git_FindCheckoutFolder somePath
-   -- slightly faster then "git_GetCheckoutFolder" (2 ticks)
-   put git_FindDotGitFolder (somePath) into checkoutFolder
-   set the itemdelimiter to slash
-   delete item -1 of checkoutFolder
-   return checkoutFolder
-end git_FindCheckoutFolder
-
-function git_GetCheckoutFolder pFolderOrFile
-   -- see also "git_WithinCheckoutFolder"
-   put the defaultFolder into oFolder
-   if pFolderOrFile is empty then
-      put the defaultFolder into pFolderOrFile
-   else
-      if there is a file pFolderOrFile then
-         set the itemdelimiter to "/"
-         delete item -1 of pFolderOrFile
-      end if
-      set the defaultFolder to pFolderOrFile
-   end if
-   
-   put git_Version() into someVersion
-   if someVersion begins with "1.7." then
-      put "git rev-parse --show-toplevel" into someShell
-      put git_PathToCommandLine() into gitPath
-      shell_BashParamEscape gitPath
-      put gitPath before someShell
-      put shell (someShell) into shellResult
-      
-      set the itemdelimiter to ":"
-      if item 1 of shellResult = "fatal" then
-         set the defaultFolder to oFolder
-         return empty
-      end if
-      
-      put word 1 to -1 of shellResult & "/" into gitRootFolder
-   else
-      put "git rev-parse --show-cdup" into someShell
-      put git_PathToCommandLine() into gitPath
-      shell_BashParamEscape gitPath
-      put gitPath before someShell
-      put shell (someShell) into shellResult
-      
-      set the itemdelimiter to ":"
-      if item 1 of shellResult = "fatal" then
-         set the defaultFolder to oFolder
-         return empty
-      end if
-      
-      put word 1 to -1 of shellResult into someChars
-      put the number of chars of someChars/3 into upCount
-      
-      set the itemdelimiter to "/"
-      put -1 - upCount into minusItem
-      put (item 1 to minusItem of pFolderOrFile) into gitRootFolder
-      put "/" after gitRootFolder
-   end if
-   
-   -- put git_FindDotGitFolder (someFile) into gitRootFolder -- an older verison could use
-   
-   set the defaultFolder to oFolder
-   return gitRootFolder
-end git_GetCheckoutFolder
 
 
 --> Git | Ignore
