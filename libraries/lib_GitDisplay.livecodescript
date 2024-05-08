@@ -432,7 +432,7 @@ command display_GitPullResult shellResult, someShell
    # Display
    display_Lines shellResult, someShell
    put the result into dView
-   set the tool_Menus of dView to "Git | Pull"
+   set the data_MenuBit of dView to "Git | Pull"
    
    # Init Menu model
    set the itemdelimiter to slash
