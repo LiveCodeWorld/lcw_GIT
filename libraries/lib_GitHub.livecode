@@ -32,6 +32,98 @@ private command _SetAuthHeaders
 end _SetAuthHeaders
 
 
+--> GitHub | Permalink
+-
+command github_DeconstructPermalink permaLink, @repoName, @projectName, @sPath, @sCommit, @startLineNum, @endLineNum
+   -- "[[base]]/[[repo]]/blob/[[commit]]/[[relPath]]"
+   -- github.com/LiveCodeWorld/lcw_Script/blob/a1aad.../controllers/Global_ScriptEditor_Create_Menu.livecodescript#L35-L39
+   
+   set the itemdelimiter to slash
+   put item 3 to -1 of permaLink into permaBit
+   github_DeconstructPermaBit permaBit, repoName, projectName, sPath, sCommit, startLineNum, endLineNum
+   return true
+end github_DeconstructPermalink
+
+command github_DeconstructPermaBit permaBit, @repoName, @projectName, @sPath, @sCommit, @startLineNum, @endLineNum
+   -- github.com/LiveCodeWorld/lcw_Script/blob/a1aad.../controllers/Global_ScriptEditor_Create_Menu.livecodescript#L35-L39
+   set the itemdelimiter to slash
+   put item 1 of permaBit into githubDomain
+   if githubDomain is not "github.com" then return false
+   if item 4 of permaBit is not "blob" then return false
+   
+   put item 2 of permaBit into repoName
+   put item 3 of permaBit into projectName
+   put item 5 of permaBit into sCommit
+   
+   get item 6 to -1 of permaBit
+   --
+   set the itemdelimiter to "#"
+   put item 1 of it into sPath
+   
+   put item -1 it into lineBit
+   --
+   set the itemdelimiter to "-"
+   put item 1 of lineBit into startLineNum
+   delete char 1 of startLineNum
+   put item 2 of lineBit into endLineNum
+   delete char 1 of endLineNum
+   --
+   return true
+end github_DeconstructPermaBit
+
+getprop github_Permalink [shortHkey]
+   put the long id of the target into hObject
+   put github_GetPermalink (hObject, shortHkey) into webPermalink
+   return webPermalink
+end github_Permalink
+
+function github_GetPermalink hObject, shortHkey, pBackNum, pRepoName
+   local sLineNum, eLineNum
+   if shortHkey is not empty then
+      hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
+   end if
+   --
+   _SetPermaLinkBits hObject, repoBit, commitHash, relativePath, pBackNum, pRepoName
+   put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink
+   return webPermalink
+end github_GetPermalink
+
+function github_ConstructPermalink commit, repo, relPath, sLineNum, eLineNum   
+   put "https://github.com" into base
+   
+   # Construct
+   get "[[base]]/[[repo]]/blob/[[commit]]/[[relPath]]"
+   put merge (it) into webPermalink
+   
+   # Add lines
+   _AddLineBit webPermalink, sLineNum, eLineNum
+   
+   return webPermalink
+end github_ConstructPermalink
+
+private command _SetPermaLinkBits hObject, @repoBit, @commitHash, @relativePath, pBackNum, pRepoName
+   if pRepoName is empty then put "LiveCodeWorld" into pRepoName
+   if pBackNum is empty then put 1 into pBackNum
+   --
+   put the filename of hObject into sFile
+   put git_GetCommitFileHash (sFile, pBackNum) into commitHash
+   git_SetRelative sFile, relativePath, checkoutFolder
+   --
+   set the itemdelimiter to slash
+   put pRepoName into repoBit
+   put item -1 of checkoutFolder into item 2 of repoBit
+end _SetPermaLinkBits
+
+private command _AddLineBit @permalinkURL, pStartLineNum, pEndLineNum
+   if pStartLineNum > 0 then
+      put "#L" & pStartLineNum after permalinkURL
+   end if
+   if pEndLineNum > pStartLineNum then
+      put "-L" & pEndLineNum after permalinkURL
+   end if
+end _AddLineBit
+
+
 --> GitHub | Orgs
 -
 function github_ListOrgRepos pOrgName
@@ -217,61 +309,6 @@ function github_GetRawPermalink hObject, pBackNum, pRepoName
    put merge ("[[base]]/[[repoBit]]/[[commitHash]]/[[relativePath]]") into rawPermalink
    return rawPermalink
 end github_GetRawPermalink
-
-
---> GitHub | Permalink
--
-getprop github_Permalink [shortHkey]
-   put the long id of the target into hObject
-   put github_GetPermalink (hObject, shortHkey) into webPermalink
-   return webPermalink
-end github_Permalink
-
-function github_GetPermalink hObject, shortHkey, pBackNum, pRepoName
-   local sLineNum, eLineNum
-   if shortHkey is not empty then
-      hkeyLine_Offsets hObject, shortHkey, sLineNum, eLineNum
-   end if
-   --
-   _SetPermaLinkBits hObject, repoBit, commitHash, relativePath, pBackNum, pRepoName
-   put github_ConstructPermalink (commitHash, repoBit, relativePath, sLineNum, eLineNum) into webPermalink
-   return webPermalink
-end github_GetPermalink
-
-function github_ConstructPermalink commit, repo, relPath, sLineNum, eLineNum   
-   put "https://github.com" into base
-   
-   # Construct
-   get "[[base]]/[[repo]]/blob/[[commit]]/[[relPath]]"
-   put merge (it) into webPermalink
-   
-   # Add lines
-   _AddLineBit webPermalink, sLineNum, eLineNum
-   
-   return webPermalink
-end github_ConstructPermalink
-
-private command _SetPermaLinkBits hObject, @repoBit, @commitHash, @relativePath, pBackNum, pRepoName
-   if pRepoName is empty then put "LiveCodeWorld" into pRepoName
-   if pBackNum is empty then put 1 into pBackNum
-   --
-   put the filename of hObject into sFile
-   put git_GetCommitFileHash (sFile, pBackNum) into commitHash
-   git_SetRelative sFile, relativePath, checkoutFolder
-   --
-   set the itemdelimiter to slash
-   put pRepoName into repoBit
-   put item -1 of checkoutFolder into item 2 of repoBit
-end _SetPermaLinkBits
-
-private command _AddLineBit @permalinkURL, pStartLineNum, pEndLineNum
-   if pStartLineNum > 0 then
-      put "#L" & pStartLineNum after permalinkURL
-   end if
-   if pEndLineNum > pStartLineNum then
-      put "-L" & pEndLineNum after permalinkURL
-   end if
-end _AddLineBit
 
 
 --> Launch
