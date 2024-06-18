@@ -49,6 +49,10 @@ end menu_SaveEditedStacks
 private on __
 end __
 
+on menu_DisplayEnvironment
+   display_Environment
+end menu_DisplayEnvironment
+
 on submenu_Dev
    return menu_DevTitle ("Global | Github | Update | Menu")
 end submenu_Dev
