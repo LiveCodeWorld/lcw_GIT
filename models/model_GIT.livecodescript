@@ -12,6 +12,16 @@ version: 0.2
 
 --> Working on
 -
+function git_GetRootFolder
+   -- should make optional as git should be accessible using shell without exact path.
+   -- used to get "git_CommitHash" for "github_GetPermalink"
+   put pref_GetValue ("gitRootFolder") into gitRootFolder
+   if gitRootFolder is empty then
+      put env_GetRepoFolder() into gitRootFolder
+   end if
+   return gitRootFolder
+end git_GetRootFolder
+
 getprop git_RelativeFolder
    -- relative to GitHub = LivecodeWorld directory (env home)
    put the git_Folder of the target into gitFolder
@@ -76,16 +86,6 @@ end git_GetCheckoutFolder
 
 --> Git | Folder
 -
-function git_GetRootFolder
-   breakpoint -- not meaningful
-   put pref_GetValue ("gitRootFolder") into gitRootFolder
-   if gitRootFolder is empty then
-      -- put revEnvironmentUserPluginsPath() & "/" into gitRootFolder
-      put env_GetRepoFolder() into gitRootFolder
-   end if
-   return gitRootFolder
-end git_GetRootFolder
-
 command git_SetRootFolder gitRootFolder
    breakpoint -- not meaningful
    folder_Format gitRootFolder
@@ -287,7 +287,7 @@ command git_InitFolder gitRootFolder, pDontAdd
       end if
    end if
    
-   git_SetRootFolder gitRootFolder
+   -- git_SetRootFolder gitRootFolder
    git_AddRootFolderToIndex gitRootFolder
    
    set the defaultfolder to oDefault
@@ -314,6 +314,7 @@ function git_GetProject pGitRootFolder
 end git_GetProject
 
 command git_SetProject projectName
+   breakpoint
    put git_TranslateProjectName (projectName) into longGitFolder
    git_SetRootFolder longGitFolder
    return longGitFolder
