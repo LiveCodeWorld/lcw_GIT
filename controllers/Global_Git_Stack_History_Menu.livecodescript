@@ -15,20 +15,20 @@ local LocalArray
 -
 getprop menu_Target [tObject]
    put the display_View of tObject into dView
-   put the displayed_Object of dView into scriptObject
-   return scriptObject
+   put the displayed_Object of dView into sObject
+   return sObject
 end menu_Target
 
 
 --> Global | Git | Stack | History | Menu
 -
-on menu_StackHistory scriptObject
-   display_StackHistory scriptObject
+on menu_StackHistory sObject
+   display_StackHistory sObject
 end menu_StackHistory
 
-on menu_FileHistory scriptObject
-   put the effective filename of scriptObject into someFile
-   put the stack_File of scriptObject into someFile
+on menu_FileHistory sObject
+   put the effective filename of sObject into someFile
+   put the stack_File of sObject into someFile
    display_GitFileHistory someFile
 end menu_FileHistory
 
