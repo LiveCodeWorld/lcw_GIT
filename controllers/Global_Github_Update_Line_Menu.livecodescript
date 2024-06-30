@@ -15,10 +15,27 @@ Full help text should be provided on the linked wiki.*/
 -
 local LocalArray
 
+--> Events
+-
+on mDoubleUp_GithubUpdate dView, projectName
+   if env_ProjectIsActive (projectName) is false then
+      project_Start projectName
+      display_Environment true
+   end if
+   display_Project projectName
+   
+   /*
+   project_Start projectName
+   display_GitProjectStatus projectName
+   -- display_Project projectName
+   display_Environment
+   */
+end mDoubleUp_GithubUpdate
+
+
 --> Menu | Props
 -
 getprop menu_Target [tObject]
-   -- put display_MenuTarget (tObject) into dView
    put the display_View of tObject into dView
    return dView
 end menu_Target
@@ -26,6 +43,16 @@ end menu_Target
 getprop menu_CheckTarget [dView]
    return exists (dView)
 end menu_CheckTarget
+
+private function _HomeStackPath dView
+   -- put _HomeStackPath (dView) into stackPath
+   -- display_ModuleTools stackPath
+   
+   put the selected_Line of dView into projectName
+   put env_ProjectFolder (projectName) into projectFolder
+   put project_PathFromFolder (projectFolder) into projectHomePath
+   return projectHomePath
+end _HomeStackPath
 
 
 --> Global | Github | Update | Line | Menu
@@ -36,6 +63,18 @@ end menu_GithubUpdateLine
 
 private on _
 end _
+
+on menu_DisplayProject dView
+   put the selected_Line of dView into projectName
+   --
+   display_Project projectName
+end menu_DisplayProject
+
+on menu_DisplayProjectArray dView
+   put the selected_Line of dView into projectName
+   --
+   display_ProjectArray projectName, false
+end menu_DisplayProjectArray
 
 on menu_Behavior dView
    put the behavior of dView into bObject
