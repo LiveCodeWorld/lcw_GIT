@@ -15,6 +15,16 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Working on
 -
+function github_ListMyRepos
+   put github_RestGetData ("/user/repos") into someData
+   return someData
+end github_ListMyRepos
+
+function github_ListPublicRepos
+   put github_RestGetData ("/users/opn/repos") into someData
+   return someData
+end github_ListPublicRepos
+
 private command _SetAuthHeaders
    /*
    gh api --header 'Accept: application/vnd.github+json' --header 'X-GitHub-Api-Version:2022-11-28' --method GET /octocat
@@ -219,16 +229,6 @@ command git_FirstPush gitFolder
    git_ExecuteShell "git push -u origin main", gitFolder
    return the result
 end git_FirstPush
-
-function github_ListMyRepos
-   put github_RestGetData ("/user/repos") into someData
-   return someData
-end github_ListMyRepos
-
-function github_ListPublicRepos
-   put github_RestGetData ("/users/opn/repos") into someData
-   return someData
-end github_ListPublicRepos
 
 getprop github_WikiPage
    put the stack_Object of the target into stackObject
