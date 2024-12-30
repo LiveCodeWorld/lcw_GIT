@@ -51,7 +51,6 @@ command display_GitStack stackPath, pSafeName
       put stackPath
       lcw_AnswerWarning "Problem opening versioned stack!"
    else
-      set lockmessages to true 
       put the name of stack stackPath into oName
       if pSafeName is empty then
          breakpoint
@@ -60,9 +59,10 @@ command display_GitStack stackPath, pSafeName
       end if
       
       # Rename the stack
+      set lockmessages to true 
       set the name of stack stackPath to pSafeName
       put the result into sError
-      get the name of stack stackPath
+      get the short name of stack stackPath
       set lockmessages to false
       
       if it is not pSafeName then
@@ -72,13 +72,15 @@ command display_GitStack stackPath, pSafeName
    end if
    
    # Open or edit renamed stack
-   if the scriptOnly of stack stackPath is true then
-      display_ScriptOnlyStack stackPath
+   set the filename of stack pSafeName to empty
+   if the scriptOnly of stack pSafeName is true then
+      -- display_ScriptOnlyStack the name of stack pSafeName 
+      edit the script of stack pSafeName
    else
-      set the destroystack of stack stackPath to true
-      set the destroywindow of stack stackPath to true
+      set the destroystack of stack pSafeName to true
+      set the destroywindow of stack pSafeName to true
       --
-      go to stack stackPath   
+      go to stack pSafeName   
    end if
    return the result
 end display_GitStack
@@ -686,9 +688,11 @@ end display_LogOutline
 command display_StackHistory someObject
    local logLinkArray
    
+   if exists (someObject) is false then return "Error, object does not exist:" && the params
    put the stack_Object of someObject into stackObject
    put the filename of stackObject into stackPath
    put the git_Folder of someObject into gitFolder
+   if there is not a folder gitFolder then return "Error, gitFolder does not exist:" && the params
    
    put git_GetFileLog (stackPath) into simpleLog
    git_ProcessSimpleLogLines simpleLog, logArray, orderedCommentLines

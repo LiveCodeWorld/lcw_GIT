@@ -43,7 +43,7 @@ command gist_SaveHkey hKeys, @pShortGistFile, pGistHelp, pIsPublic
    end if
    put json_Utf8Encode (pGistHelp) into pGistHelp
    
-   put hkey_CollectFromObjects (hKeys) into someScript
+   put script_CollectFromObjects (hKeys) into someScript
    put gist_ShortFileFromHkey (hKeys) into shortGistFile
    
    put gist_FindInListArray (shortGistFile) into gistID

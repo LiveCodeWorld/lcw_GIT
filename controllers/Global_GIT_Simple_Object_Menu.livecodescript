@@ -55,6 +55,10 @@ on menu_LaunchGithub sObject
    launch url someURL
 end menu_LaunchGithub
 
+on menu_StackHistory sObject
+   display_StackHistory sObject
+end menu_StackHistory
+
 on menu_DisplayGitStatus sObject
    display_GitStatus sObject
 end menu_DisplayGitStatus
