@@ -480,7 +480,9 @@ end github_ListOrgIssues
 command github_CreateOrgRepo rName, rDesc, pOrgName, pHomePage
    -- https://developer.github.com/v3/repos/#create
    if pOrgName is empty then put "LiveCodeWorld" into pOrgName
-   if pHomePage is empty then put "http://livecode.world" into pHomePage
+   if pHomePage is empty then
+      put platform_RestURL() into pHomePage
+   end if
    put merge ("/orgs/[[pOrgName]]/repos") into restPath
    --
    put rName into postArray ["name"]

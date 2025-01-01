@@ -13,7 +13,6 @@ They are used by the revIgniter Code Helper application to speed up coding contr
 These handlers are not (yet) for use on the server, but in the future they could be useful for server-to-server interactiong.
 */
 
-
 --> Currently Working On
 -
 command rig_LaunchGist shortFile, pGistType
@@ -163,8 +162,8 @@ end rig_SaveGistStacks
 private function _setControllerHelp mergeHelp, shortServer
    if mergeHelp is not empty then return mergeHelp
    switch shortServer
-      case "livecode.world"
-         if mergeHelp is empty then put "[[shortController]] is a revIgniter controller for the www.livecode.world web site." into mergeHelp
+      case "livecode.wiki"
+         if mergeHelp is empty then put "[[shortController]] is a revIgniter controller for the www.livecode.wiki web site." into mergeHelp
          break
       case "himalayanacademy.com"
          if mergeHelp is empty then put "[[shortController]] is a revIgniter controller for the Himalayan Academy web site." into mergeHelp
@@ -181,8 +180,8 @@ end _setControllerHelp
 private command _setScriptStackGistHelp @mergeHelp, shortServer
    if mergeHelp is not empty then return mergeHelp
    switch shortServer
-      case "livecode.world"
-         if mergeHelp is empty then put "[[shortStack]] is a revIgniter script-only stack for the www.livecode.world web site." into mergeHelp
+      case "livecode.wiki"
+         if mergeHelp is empty then put "[[shortStack]] is a revIgniter script-only stack for the www.livecode.wiki web site." into mergeHelp
          break
       case "himalayanacademy.com"
          if mergeHelp is empty then put "[[shortStack]] is a revIgniter script-only stack for the Himalayan Academy web site." into mergeHelp
