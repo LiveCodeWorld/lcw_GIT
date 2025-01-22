@@ -63,6 +63,10 @@ end menu_DisplayGistScripts
 on _
 end _
 
+on menu_Xterm
+   display_GithubShell "David"
+end menu_Xterm
+
 on submenu_Dev
    return menu_DevTitle ("Global | GIT | Menu")
 end submenu_Dev

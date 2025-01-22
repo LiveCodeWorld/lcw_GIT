@@ -12,18 +12,38 @@ version: 0.1
 
 --> Working on
 -
-function github_ConstructPageArray readmeMarkdown, pageTitle
-   -- fedwiki_ConvertGitHubReadme
-   put wiki_Merge ("On this page we describe the [[Github]] project {{githubProjectName}}.") into firstPara
+command display_GitHubProjectInfo orgName, pOrgArray
+   -- put github_FindOrgArray (orgName, orgsData) into pOrgArray
+   display_Data pOrgArray, orgName, "Github Org"
+   put the result into displayView
+   return displayView
+end display_GitHubProjectInfo
+
+command display_GithubApiHelp pBrowserView
+   display_Browser "https://docs.github.com/en/rest?apiVersion=2022-11-28", pBrowserView, "Github API"
+end display_GithubApiHelp
+
+
+--> Display | Github
+-
+command display_GithubOrgs
+   -- put lcw_ListMyGithubOrgs() into orgNames
+   -- put github_FetchMyOrgsData ("Developer") into rArray
+   put gh_FetchMyOrgsData() into indexArray
+   put indexArray_List (rArray, "login") into sIndex
    --
-   put pageArray_Construct (pageTitle, firstPara) into pageArray
-   pageArray_AddMarkdown pageArray, readmeMarkdown
-   pageArray_AddMarkdown pageArray, "# See also"
-   pageArray_AddMarkdown pageArray, "- [[Github]]"
+   display_IndexArray indexArray, "opn", "Github Orgs", pOrdered, "login"
+   put the result into dView
+   set the tool_MenuBit ["lib_Github"] of dView to "Github | Orgs"
+   return dView
+end display_GithubOrgs
+
+command display_GithubShell repoName, pOrgName
+   put gh_CreateOrgRepo (repoName, pOrgName) into sShell
    --
-   pageArray_CleanJournal pageArray
-   return pageArray
-end github_ConstructPageArray
+   display_Xterm sShell
+   return the result
+end display_GithubShell
 
 command display_GitGlobalConfig 
    # Shell at home
@@ -63,19 +83,6 @@ command display_GitLocalConfig gitFolder
    return dView
 end display_GitLocalConfig
 
-command display_GitHubOrgs
-   put github_ListMyOrgs() into orgNames
-   --
-   display_Tools orgNames, "My", "Github | Orgs", "Github Orgs", "lcw_Github"
-   put the result into displayView
-   --
-   put github_OrgsData (true) into orgsData
-   -- put github_ConstructOrgIndex (orgsData) into orgNames
-   set the displayed_OrgsData of displayView to orgsData
-   --
-   return displayView
-end display_GitHubOrgs
-
 command display_GitHubInfo repoName
    put github_FetchRepoArray (repoName) into repoArray
    display_Array repoArray
@@ -90,9 +97,10 @@ command display_GithubOrgRepos pOrgName
    if pOrgName is empty then put "LiveCodeWorld" into pOrgName
    
    put github_ListOrgRepos (pOrgName) into repoNames
+   -- put lcw_ListGithubRepos() into repoNames
    sort repoNames
    --
-   display_Tools repoNames, pOrgName, "LCW | Projects", "Github Org Repos", "lcw_Github"
+   display_Tools repoNames, pOrgName, "Github | Projects", "Github Repos", "lcw_Github"
    put the result into displayView
    
    # Colout local and missing projects
@@ -125,13 +133,6 @@ command display_GithubProjects pOrgName
    return displayView
 end display_GithubProjects
 
-command display_GitHubProjectInfo orgName, orgsData
-   put github_FindOrgArray (orgName, orgsData) into orgArray
-   display_Data orgArray, orgName, "Github Org"
-   put the result into displayView
-   return displayView
-end display_GitHubProjectInfo
-
 
 --> Display | Git | CommitHistory
 -
@@ -151,26 +152,6 @@ on mDoubleUp_GITSettings displayView, someLine
    breakpoint
    put the title_Text of displayView into someTitle
 end mDoubleUp_GITSettings
-
-on mDoubleUp_GithubOrgs displayView, someLine
-   put the displayed_OrgsData of displayView into orgsData
-   put the selected_Line of displayView into projectName
-   --
-   display_GitHubProjectInfo projectName, orgsData
-end mDoubleUp_GithubOrgs
-
-on mDoubleUp_LcwProjects treeField, projectName
-   if the optionKey is down then breakpoint
-   --
-   if exists (stack projectName) then
-      put the name of stack projectName into sObject
-      --
-      display_GitStatus sObject
-   else
-      put env_ConstructProjectFolder (projectName) into gitCheckoutFolder
-      display_GitFolderStatus gitCheckoutFolder
-   end if
-end mDoubleUp_LcwProjects
 
 command mDoubleUp_GitLog dView, someLine
    breakpoint
@@ -197,3 +178,21 @@ command mDoubleUp_GitLog dView, someLine
       default
    end switch
 end mDoubleUp_GitLog
+
+
+--> Deps
+-
+function github_ConstructPageArray readmeMarkdown, pageTitle
+   -- fedwiki_ConvertGitHubReadme
+   put wiki_Merge ("On this page we describe the [[Github]] project {{githubProjectName}}.") into firstPara
+   --
+   put pageArray_Construct (pageTitle, firstPara) into pageArray
+   pageArray_AddMarkdown pageArray, readmeMarkdown
+   pageArray_AddMarkdown pageArray, "# See also"
+   pageArray_AddMarkdown pageArray, "- [[Github]]"
+   --
+   pageArray_CleanJournal pageArray
+   return pageArray
+end github_ConstructPageArray
+
+

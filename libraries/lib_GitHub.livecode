@@ -11,35 +11,215 @@ version: 0.3
 A library for interfacing with GitHub APIv3.
 
 The gist library is seperate and moving forwards we wil create individual libraries for each GitHub subproject.
+
+- https://cli.github.com/manual/gh_api
 */
+
+--> Variables
+-
+constant GithubApiVersio = "X-GitHub-Api-Version:2022-11-28"
+constant ApiDate = "2022-11-28"
+constant AcceptType = "Accept: application/vnd.github+json"
+
+function gh_DefaultOrg
+   return "Vision-Fish"
+end gh_DefaultOrg
+
 
 --> Working on
 -
+function github_UserScopeData pKeyName
+   -- curl -H "Authorization: token YOUR_PERSONAL_ACCESS_TOKEN" https://api.github.com/user
+   
+   put github_RestGet ("/user", pKeyName) into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_UserScopeData
+
+function lcw_ListGithubRepos pUseCli
+   if pUseCli is true then
+      put gh_ListOrgRepos ("LiveCodeWorld") into orgRepos
+   else
+      put github_ListOrgRepos ("LiveCodeWorld") into orgRepos
+   end if
+   filter orgRepos with "lcw_*"
+   sort orgRepos
+   return orgRepos
+end lcw_ListGithubRepos
+
+function lcw_ListMyGithubOrgs
+   -- put github_FetchMyOrgsData ("Developer") into rArray
+   put gh_FetchMyOrgsData() into rArray
+   
+   put indexArray_List (rArray, "login") into sIndex
+   return sIndex
+end lcw_ListMyGithubOrgs
+
+
+--> Github | List
+-
+function github_ListMyOrgs 
+   put github_FetchMyOrgsData ("Developer") into rArray
+   put indexArray_List (rArray, "login") into sIndex
+   return sIndex
+end github_ListMyOrgs
+
+function github_FetchMyOrgsData pKeyName
+   -- https://docs.github.com/en/rest/orgs/orgs?apiVersion=2022-11-28
+   put github_RestGet ("/user/orgs", pKeyName) into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_FetchMyOrgsData
+
+function github_FetchUserOrgsData pUserName, pKeyName
+   -- https://docs.github.com/en/rest/orgs/orgs?apiVersion=2022-11-28
+   if pUserName is empty then put "opn" into pUserName
+   --
+   put merge ("/users/[[pUserName]]/orgs") into restPath
+   put github_RestGet (restPath, pKeyName) into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_FetchUserOrgsData
+
+
+--> GitHub | Orgs
+-
+function github_ListOrgArray
+   -- not sure which organisations are listed here. Public ones?
+   breakpoint
+   -- https://docs.github.com/en/rest/orgs/orgs?apiVersion=2022-11-28
+   put github_RestGet ("organizations") into rJSON
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end github_ListOrgArray
+
+
+--> Github | List | Repos
+-
 function github_ListMyRepos
-   put github_RestGetData ("/user/repos") into someData
-   return someData
+   put github_RestGetData ("/user/repos") into rArray
+   put indexArray_List (rArray, "name") into sIndex
+   return sIndex
 end github_ListMyRepos
 
+function github_ListOrgRepos pOrgName
+   put github_FetchOrgReposData (pOrgName) into rArray
+   --
+   put indexArray_List (rArray, "name") into sIndex
+   return sIndex
+end github_ListOrgRepos
+
+
+--> Gh
+-
+function gh_FetchMyOrgsData
+   -- should be same as "github_FetchMyOrgsData"   
+   put gh_DoPath ("/user/orgs") into rJSON
+   --
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end gh_FetchMyOrgsData
+
+function gh_ListOrgRepos pOrgName
+   put gh_FetchOrgReposData (pOrgName) into rArray
+   --
+   put indexArray_List (rArray, "name") into sIndex
+   return sIndex
+end gh_ListOrgRepos
+
+function gh_FetchOrgReposData pOrgName   
+   -- get merge ("gh api -H '[[AcceptType]]' -H 'X-GitHub-Api-Version: [[ApiDate]]' /orgs/[[pOrgName]]/repos")
+   
+   put merge ("/orgs/[[pOrgName]]/repos") into ghPath
+   put "?per_page=100&page=1" after ghPath
+   
+   put gh_DoPath (ghPath) into rJSON
+   --
+   put json_ToArray (rJSON) into rArray
+   return rArray
+end gh_FetchOrgReposData
+
+function gh_DoPath ghPath
+   put gh_Construct (ghPath) into sShell
+   put shell (sShell) into sResult
+   return sResult
+end gh_DoPath
+
+function gh_Construct ghPath   
+   -- https://cli.github.com/manual/gh_api
+   put merge ("gh api -H '[[AcceptType]]' -H 'X-GitHub-Api-Version: [[ApiDate]]' [[ghPath]]") into sShell
+   return sShell
+end gh_Construct
+
+function github_FetchOrgReposData pOrgName
+   /*
+   https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-organization-repositories
+   
+   curl -L \
+         -H "Accept: application/vnd.github+json" \
+         -H "Authorization: Bearer <YOUR-TOKEN>" \
+         -H "X-GitHub-Api-Version: 2022-11-28" \
+         https://api.github.com/orgs/ORG/repos
+   */
+   if pOrgName is empty then put "LiveCodeWorld" into pOrgName
+   --
+   put merge ("orgs/[[pOrgName]]/repos") into restPath
+   put "?per_page=100&page=1" after restPath
+   --
+   put github_RestGetData (restPath, "Developer") into orgRepoData
+   return orgRepoData
+end github_FetchOrgReposData
+
+
+--> Github | List
+-
 function github_ListPublicRepos
-   put github_RestGetData ("/users/opn/repos") into someData
-   return someData
+   put github_RestGetData ("/users/opn/repos") into rArray
+   put indexArray_List (rArray, "login") into sIndex
+   return sIndex
 end github_ListPublicRepos
 
-private command _SetAuthHeaders
-   /*
-   gh api --header 'Accept: application/vnd.github+json' --header 'X-GitHub-Api-Version:2022-11-28' --method GET /octocat
-   */
+function gh_CreateOrgRepo repoName, pOrgName
+   if pOrgName is empty then put gh_DefaultOrg() into pOrgName
    
-   put github_GetApiToken() into gitHubApiToken
+   # Step 1: Create the repository under an organization
+   put "gh repo create [[pOrgName]]/[[repoName]]" into sShell
+   put space & "--public" after sShell
+   put space & "--license cc-by-sa-4.0" after sShell
    --
-   -- put "Accept: application/vnd.github.v3+json" into someHeader
-   put "Accept: application/vnd.github+json" into someHeader
-   put CR & "X-GitHub-Api-Version:2022-11-28" after someHeader
+   put space & "--description 'A new repository with a CC-BY-SA-4.0 license'" after sShell
+   put space & "--confirm" after sShell
    --
-   put CR & "Authorization: Bearer" && gitHubApiToken after someHeader
-   put CR & "User-Agent: OPN" after someHeader
-   set the httpheaders to someHeader
-end _SetAuthHeaders
+   return merge (sShell)
+end gh_CreateOrgRepo
+
+function gh_CloneOrgRepo repoName, pOrgName
+   if pOrgName is empty then put gh_DefaultOrg() into pOrgName
+   
+   # Step 2: Clone the repository
+   put "gh repo clone [[pOrgName]]/[[repoName]]" into sShell
+   put CR & "cd [[repoName]]" after sShell
+   shell_OneLine sShell
+   --
+   get merge (sShell)
+   return it
+end gh_CloneOrgRepo
+
+command shell_OneLine @sShell
+   replace CR with "; " in sShell
+end shell_OneLine
+
+function gh_AddRepoLicence
+   # Step 3: Add the license file manually (if not added during creation)
+   put "curl -o LICENSE 'https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt'" into sShell
+   
+   # Step 4: Commit the license (if added manually)
+   put "git add LICENSE" into sShell
+   put CR & "git commit -m 'Add CC-BY-SA-4.0 license'" after sShell
+   put CR & "git push" after sShell
+   --
+   return sShell
+end gh_AddRepoLicence
 
 
 --> GitHub | Permalink
@@ -134,57 +314,6 @@ private command _AddLineBit @permalinkURL, pStartLineNum, pEndLineNum
 end _AddLineBit
 
 
---> GitHub | Orgs
--
-function github_ListOrgRepos pOrgName
-   put github_FetchOrgReposData (pOrgName) into rData
-   --
-   repeat with itemNum = 1 to item 2 of the extents of rData
-      put rData [itemNum]["name"] & CR after nameIndex
-   end repeat
-   delete char -1 of nameIndex
-   return nameIndex
-end github_ListOrgRepos
-
-function github_FetchOrgReposData pOrgName
-   /*
-   -- https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-organization-repositories
-   
-   curl -L \
-         -H "Accept: application/vnd.github+json" \
-         -H "Authorization: Bearer <YOUR-TOKEN>"\
-         -H "X-GitHub-Api-Version: 2022-11-28" \
-         https://api.github.com/orgs/ORG/repos
-   */
-   if pOrgName is empty then put "LiveCodeWorld" into pOrgName
-   --
-   put merge ("orgs/[[pOrgName]]/repos") into restPath
-   put github_RestGetData (restPath) into orgRepoData
-   return orgRepoData
-end github_FetchOrgReposData
-
-function github_ListMyOrgs
-   put github_ListMyOrgsData() into rArray
-   repeat with itemNum = 1 to item 2 of the extents of rArray
-      put rArray [itemNum]["login"] & CR after loginIndex
-   end repeat
-   delete char -1 of loginIndex
-   return loginIndex
-end github_ListMyOrgs
-
-function github_ListMyOrgsData
-   put github_RestGet ("/user/orgs") into rJSON
-   put json_ToArray (rJSON) into rArray
-   return rArray
-end github_ListMyOrgsData
-
-function github_ListOrgArray
-   put github_RestGet ("organizations") into rJSON
-   put json_ToArray (rJSON) into rArray
-   return rArray
-end github_ListOrgArray
-
-
 --> GitHub | Create
 -
 command github_CreateProject repoName, gitFolder, repoDescription
@@ -252,14 +381,28 @@ end github_RelativePath
 
 --> GitHub | Tokens
 -
-function github_GetApiToken
-   put secret_Get ("github_GetApiToken") into gitHubApiToken
+function github_ListApiKeyNames
+   -- return "Vision,LivecodeWorld,Developer"
+   put secret_GetArray ("github") into secretArray
+   put keys (secretArray) into secretKeys
+   return secretKeys
+end github_ListApiKeyNames
+
+function github_GetApiToken pTokenName
+   -- put secret_Get ("github_GetApiToken", pTokenName) into gitHubApiToken
+   put secret_Get (pTokenName, "github") into gitHubApiToken
    return gitHubApiToken
 end github_GetApiToken
 
-command github_SetApiToken gitHubApiToken
-   secret_Set "github_GetApiToken", gitHubApiToken
+command github_SetApiToken gitHubApiToken, pTokenName
+   -- secret_Set "github_GetApiToken", gitHubApiToken, pTokenName
+   secret_Set pTokenName, gitHubApiToken, "github"
 end github_SetApiToken
+
+command github_DeleteApiToken tName
+   -- secret_Delete "github_GetApiToken", tName
+   secret_Delete tName, "github"
+end github_DeleteApiToken
 
 function gitHub_OldApiToken
    put "GitHubAuthoringToken" into prefName -- "GitHubApiToken"
@@ -535,26 +678,26 @@ end github_FetchRepoArray
 
 --> GitHub | REST
 -
-function github_RestGetData restPath
-   put github_RestGet (restPath) into someJSON
+function github_RestGetData restPath, pKeyName
+   put github_RestGet (restPath, pKeyName) into someJSON
    put json_ToArray (someJSON) into someData
    return someData
 end github_RestGetData
 
-function github_RestGet restPath
-   put _constructApiUrl (restPath) into someUrl
-   put github_RestGetFromUrl (someUrl) into someJSON
+function github_RestGet restPath, pKeyName
+   put _ConstructApiUrl (restPath) into someUrl
+   put github_RestGetFromUrl (someUrl, pKeyName) into someJSON
    return someJSON
 end github_RestGet
 
-function github_RestGetFromUrl someUrl
-   _setAuthHeaders
+function github_RestGetFromUrl someUrl, pKeyName
+   _SetAuthHeaders pKeyName
    put url someUrl into someJSON
    return someJSON
 end github_RestGetFromUrl
 
-command github_RestPost restPath, postJSON
-   _setAuthHeaders
+command github_RestPost restPath, postJSON, pKeyName
+   _SetAuthHeaders pKeyName
    put _constructApiUrl (restPath) into someUrl
    
    post postJSON to url someUrl
@@ -562,18 +705,19 @@ command github_RestPost restPath, postJSON
    return postResult
 end github_RestPost
 
-command github_RestPatch restPath, postJSON
-   _setAuthHeaders
+command github_RestPatch restPath, postJSON, pKeyName
+   _SetAuthHeaders pKeyName
    put _constructApiUrl (restPath) into someUrl
+   
    -- patch url someUrl
    post postJSON to url someUrl
    put it into postResult
    return postResult
 end github_RestPatch
 
-command github_RestDelete restPath
+command github_RestDelete restPath, pKeyName
    -- this is slow
-   _setAuthHeaders
+   _SetAuthHeaders pKeyName
    put _constructApiUrl (restPath) into someUrl
    delete url someUrl
    return the result
@@ -582,6 +726,27 @@ end github_RestDelete
 
 --> GitHub | Private
 -
+private command _SetAuthHeaders pKeyName
+   /*
+   gh api --header 'Accept: application/vnd.github+json' --header 'X-GitHub-Api-Version:2022-11-28' --method GET /octocat
+   */  
+   -- put "Accept: application/vnd.github.v3+json" into someHeader
+   put "Accept: application/vnd.github+json" into someHeader
+   put CR & GithubApiVersio after someHeader
+   --
+   switch pKeyName
+      case "no auth"
+         -- don't add Authorization header
+         break
+      default
+         put github_GetApiToken (pKeyName) into gitHubApiToken
+         put CR & "Authorization: Bearer" && gitHubApiToken after someHeader
+   end switch
+   --
+   put CR & "User-Agent: OPN" after someHeader
+   set the httpheaders to someHeader
+end _SetAuthHeaders
+
 private function _constructIssueJSON someTitle, pBody, pAssignee, pMilestone, pLabelArray
    put someTitle into jsonArray ["title"]
    

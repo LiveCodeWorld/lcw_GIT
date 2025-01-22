@@ -1,7 +1,7 @@
 ﻿script "Global | LCW | Projects | Line | Menu"
 --> MetaData
 -
-copyright: Anonymous
+copyright: David Bovill
 license: GPLv3
 name: Global | LCW | Projects | Line | Menu
 type: controller
@@ -18,68 +18,38 @@ local LocalArray
 --> Menu | Props
 -
 getprop menu_Target [tObject]
-   -- called first
    pass menu_Target
 end menu_Target
-
-getprop menu_CheckTarget [mTarget]
-   -- use to do initialisation
-   pass menu_CheckTarget
-end menu_CheckTarget
-
-on menu_Init tObject
-   -- not needed any more
-   -- use "menu_CheckTarget" to any initialisation
-   put the display_View of tObject into displayView
-   --
-   put the dispayed_Data of displayView into LocalArray ["dataArray"]
-end menu_Init
-
-getprop test_Param [displayView]
-  return "b"
-end test_Param
-
-getprop test_Params [displayView]
-   return "a,b,c"
-end test_Params
 
 getprop menu_CheckTarget [displayView]
   return true
 end menu_CheckTarget
 
-getprop checked_TestChecked
-   return true
-end checked_TestChecked
-
-getprop disabled_Test
-  return false -- true, "delete"
-end disabled_Test
+on mDoubleUp_LcwProjects treeField, projectName
+   if the optionKey is down then breakpoint
+   --
+   if exists (stack projectName) then
+      put the name of stack projectName into sObject
+      --
+      display_GitStatus sObject
+   else
+      put env_ConstructProjectFolder (projectName) into gitCheckoutFolder
+      display_GitFolderStatus gitCheckoutFolder
+   end if
+end mDoubleUp_LcwProjects
 
 
 --> Global | LCW | Projects | Line | Menu
 -
-on menu_Test displayView, abc
-   put displayView & CR & abc
-end menu_Test
-
-on menu_TestChecked
-  put menu_GetChecked (the params)
-end menu_TestChecked
+on menu_DisplayRepoData dView
+   put the selectd_Line of dView into projectName
+   --
+   display_GithubRepo projectName
+end menu_DisplayRepoData
 
 on _
 end _
 
 on submenu_Dev
-   return "Dev | Menu"
+   return menu_DevTitle ("Global | LCW | Projects | Line | Menu")
 end submenu_Dev
-
-
---> Dev | Menu
--
-on menu_Experiment displayView
-   put displayView
-end menu_Experiment
-
-
---> Deps
--

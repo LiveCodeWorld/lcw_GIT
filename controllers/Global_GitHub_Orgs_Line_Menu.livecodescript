@@ -5,7 +5,7 @@ copyright: Anonymous
 license: GPLv3
 name: Global | GitHub | Orgs | Line | Menu
 type: controller
-version: 0.1
+version: 0.2
 
 /*Here you can describe this menu.
 Full help text should be provided on the linked wiki.*/
@@ -23,14 +23,24 @@ getprop menu_Target [tObject]
    return displayView
 end menu_Target
 
+on mDoubleUp_GithubOrgs dView, orgName
+   -- put the selected_Line of dView into orgName
+   put the displayed_Data of dView into nameArray
+   put nameArray [orgName] into orgData
+   --
+   -- display_GitHubProjectInfo orgName, orgData
+   display_GithubOrgRepos orgName
+end mDoubleUp_GithubOrgs
+
 
 --> Global | GitHub | Orgs | Line | Menu
 -
-on menu_DisplayOrgData displayView
-   put the displayed_OrgsData of displayView into orgsData
-   put the selected_Line of displayView into orgName
+on menu_DisplayOrgData dView
+   put the displayed_Data of dView into nameArray
+   put the selected_Line of dView into orgName
+   put nameArray [orgName] into orgData
    --
-   display_GitHubProjectInfo orgName, orgsData
+   display_GitHubProjectInfo orgName, orgData
 end menu_DisplayOrgData
 
 on _
@@ -46,3 +56,4 @@ end submenu_Dev
 on _Experiment displayView
    put displayView
 end _Experiment
+

@@ -121,7 +121,7 @@ command git_InitMenuModel dView, projectName
 end git_InitMenuModel
 
 command git_InitGlobalModel
-   put github_ListMyOrgsData() into orgsData
+   put lcw_ListMyGithubOrgs() into orgsData
    put orgsData into LocalArray ["orgsData"]
 end git_InitGlobalModel
 

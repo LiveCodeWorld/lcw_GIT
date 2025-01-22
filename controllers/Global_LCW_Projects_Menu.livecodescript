@@ -95,11 +95,12 @@ on menu_LocalProjects displayView
    display_Environment
 end menu_LocalProjects
 
-on menu_GithubProjects displayView
-   put github_ListOrgProjects() into someIndex
-   --
-   _SetIndex someIndex, the params, displayView
-end menu_GithubProjects
+on menu_LivecodeWorldOnGithub displayView
+   ---put github_ListOrgProjects() into someIndex
+   -- _SetIndex someIndex, the params, displayView
+   
+   display_GithubOrgRepos
+end menu_LivecodeWorldOnGithub
 
 private on __
 end __
@@ -123,10 +124,33 @@ end menu_ExportProjectArrays
 private on ___
 end ___
 
+on menu_UserScope dView, keyName
+   put github_UserScopeData (keyName) into scopeData
+   --
+   display_Data scopeData, keyName, "github_UserScopeData()"
+end menu_UserScope
+
+getprop userScope_Params
+   return github_ListApiKeyNames()
+end userScope_Params
+
+on menu_GithubOrgs dView, keyName
+   put github_FetchMyOrgsData (keyName) into rData
+   display_Data rData, keyName, "github_FetchMyOrgsData()"
+end menu_GithubOrgs
+
+getprop githubOrgs_Params
+   return github_ListApiKeyNames()
+end githubOrgs_Params
+
+on menu_FetchMyOrgsData dView
+   put gh_FetchMyOrgsData() into rData
+   display_Data rData, "gh_FetchMyOrgsData()", "Github"
+end menu_FetchMyOrgsData
+
 on menu_Refresh displayView
    set the title_Text of displayView to "LiveCodeWorld"
    --
-   display_GithubProjects
+   -- display_GithubProjects
+   display_GithubOrgRepos
 end menu_Refresh
-
-

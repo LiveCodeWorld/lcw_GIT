@@ -25,14 +25,20 @@ end menu_Target
 
 --> Global | GitHub | Orgs | Menu
 -
-on menu_DisplayOrgsData displayView
-   put the displayed_OrgsData of displayView into orgsData
+on menu_DisplayOrgData dView
+   put the view_Data of dView into indexArray
+   put the displayed_Data of dView into nameArray
    --
-   display_Data orgsData, "Orgs Data", "Github"
-end menu_DisplayOrgsData
+   display_Data indexArray, "indexArray", "Github Orgs"
+   display_Data nameArray, "nameArray", "Github Orgs"
+end menu_DisplayOrgData
 
 on _
 end _
+
+on menu_Refresh
+   display_GithubOrgs
+end menu_Refresh
 
 on submenu_Dev
    return "Dev | Menu"

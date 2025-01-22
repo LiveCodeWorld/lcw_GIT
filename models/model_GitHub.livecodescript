@@ -19,17 +19,9 @@ getprop github_ModuleUrl
    return githubURL
 end github_ModuleUrl
 
-command module_GoTo mName, pShowTools, pMakeVisible
-   put pMakeVisible is not false into pMakeVisible
-   view_NormalizeName mName
-   put view_GetTemplateObject (mName) into mObject
-   object_GoTo mObject, pMakeVisible
-   
-   if the shiftKey is "Down" or pShowTools is true then
-      display_ModuleTools mName
-   end if
-end module_GoTo
 
+--> Display | Github
+-
 command gitHub_GoModule moduleName
    # Save and Remove from memory
    if exists (stack moduleName) then
