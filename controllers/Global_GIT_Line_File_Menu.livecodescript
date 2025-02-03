@@ -156,8 +156,8 @@ on menu_StackHistory dView
    display_StackHistory scriptObject
 end menu_StackHistory
 
-private command _
-end _
+private command _1
+end _1
 
 on menu_StageThenCommit arrayView
    put lcw_Ask ("Comment on this change...") into someComment
@@ -170,8 +170,8 @@ on menu_StageThenCommit arrayView
    _RefreshGitFolderStatus
 end menu_StageThenCommit
 
-private command __
-end __
+private command _2
+end _2
 
 on menu_AddUntrackedFile displayView
    put _GetFile (displayView) into someFile

@@ -14,6 +14,13 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working On
 -
+command git_DiscardFolder gitFolder
+   -- (use "git restore <file>..." to discard changes in working directory)
+   -- https://git-scm.com/docs/git-restore
+   put git_ExecuteShellCommand ("git restore .", gitFolder) into shellResult
+   return shellResult
+end git_DiscardFolder
+
 command git_ExportFileRevision someFile, commitHash, pToFile
    /*
    fatal: Path 'libraries/lib_Git.livecodescript' exists, but not 'lib_Git.livecodescript'.

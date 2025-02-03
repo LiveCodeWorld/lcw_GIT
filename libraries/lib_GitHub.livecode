@@ -22,12 +22,56 @@ constant ApiDate = "2022-11-28"
 constant AcceptType = "Accept: application/vnd.github+json"
 
 function gh_DefaultOrg
+   return "LiveCodeWorld"
    return "Vision-Fish"
 end gh_DefaultOrg
 
 
+--> Move
+-
+command shell_OneLine @sShell
+   replace CR with "; " in sShell
+end shell_OneLine
+
+
 --> Working on
 -
+command github_DownloadProject projectName, lcwRoot
+   -- this should use git to clone a project to the lcwRoot folder
+   -- and return the path to the projects home stack folder
+   breakpoint
+   github_LaunchStack stackName, pRepoName
+   
+   -- stub for now
+   put empty into projectHomeStackPath
+   if projectHomeStackPath is empty then
+      put lcwRoot
+      answer warning merge ("Failed to download project '[[projectName]]'!")
+      exit to top
+   end if
+end github_DownloadProject
+
+command gh_CloneOrgRepo repoName, pOrgName
+   -- gh repo clone LiveCodeWorld/lcw_Discord
+   if repoName is empty then return "Error, no repo specified"
+   if pOrgName is empty then put gh_DefaultOrg() into pOrgName
+   
+   # Step 1: Set the defaultfolder
+   put the defaultfolder into oFolder
+   set the defaultfolder to env_GetRepoFolder()
+   
+   # Step 2: Clone the repository
+   get "gh repo clone [[pOrgName]]/[[repoName]]"
+   -- put "; "  after it
+   -- put "cd [[repoName]]" after it
+   --
+   put merge (it) into sShell
+   put shell (sShell) itno sResult
+   --
+   set the defaultfolder to oFolder
+   return sResult
+end gh_CloneOrgRepo
+
 function github_UserScopeData pKeyName
    -- curl -H "Authorization: token YOUR_PERSONAL_ACCESS_TOKEN" https://api.github.com/user
    
@@ -192,22 +236,6 @@ function gh_CreateOrgRepo repoName, pOrgName
    --
    return merge (sShell)
 end gh_CreateOrgRepo
-
-function gh_CloneOrgRepo repoName, pOrgName
-   if pOrgName is empty then put gh_DefaultOrg() into pOrgName
-   
-   # Step 2: Clone the repository
-   put "gh repo clone [[pOrgName]]/[[repoName]]" into sShell
-   put CR & "cd [[repoName]]" after sShell
-   shell_OneLine sShell
-   --
-   get merge (sShell)
-   return it
-end gh_CloneOrgRepo
-
-command shell_OneLine @sShell
-   replace CR with "; " in sShell
-end shell_OneLine
 
 function gh_AddRepoLicence
    # Step 3: Add the license file manually (if not added during creation)

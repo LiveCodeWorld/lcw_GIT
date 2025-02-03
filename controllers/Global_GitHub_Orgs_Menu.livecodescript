@@ -25,6 +25,21 @@ end menu_Target
 
 --> Global | GitHub | Orgs | Menu
 -
+on menu_LivecodeWorldRepos
+   display_GithubOrgRepos
+end menu_LivecodeWorldRepos
+
+on menu_MyGithubOrgs
+   display_GithubOrgs
+end menu_MyGithubOrgs
+
+on _
+end _
+
+-- on menu_GithubProjects
+   display_GithubProjects
+end menu_GithubProjects
+
 on menu_DisplayOrgData dView
    put the view_Data of dView into indexArray
    put the displayed_Data of dView into nameArray
@@ -32,9 +47,6 @@ on menu_DisplayOrgData dView
    display_Data indexArray, "indexArray", "Github Orgs"
    display_Data nameArray, "nameArray", "Github Orgs"
 end menu_DisplayOrgData
-
-on _
-end _
 
 on menu_Refresh
    display_GithubOrgs

@@ -16,7 +16,8 @@ local LocalArray
 
 getprop menu_Target [tObject]
    _InitLocalArray tObject
-   put LocalArray ["projectName"] into projectName
+   -- put LocalArray ["projectName"] into projectName
+   put the title_Text of tObject into projectName
    return projectName
 end menu_Target
 
@@ -24,14 +25,6 @@ private command _InitLocalArray tObject
    put the display_View of tObject into dView
    put the git_SettingsModel of dView into LocalArray
 end _InitLocalArray
-
-getprop disabled_InitialiseGit
-   if LocalArray ["gitFolder"] is not empty then
-      return "delete"
-   else
-      return false
-   end if
-end disabled_InitialiseGit
 
 getprop disabled_CreateGithubProject
    if LocalArray ["gitFolder"] is empty then return true
@@ -98,6 +91,11 @@ on menu_InitialiseGit projectName
    --
    git_AskInit projectName
 end menu_InitialiseGit
+
+getprop disabled_InitialiseGit [repoName]
+   -- put LocalArray ["projectName"] into repoName
+   return git_GetInit (repoName)
+end disabled_InitialiseGit
 
 private command _
 end _

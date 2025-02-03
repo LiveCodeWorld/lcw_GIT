@@ -25,6 +25,10 @@ private command _InitLocalArray tObject
    put the display_View of tObject into dView
    put the git_SettingsModel of dView into LocalArray
    put dView into LocalArray ["displayView"]
+   --
+   put the title_Text of tObject into repoName
+   put repoName into LocalArray ["projectName"]
+   put env_GetRepoFolder (repoName) into LocalArray ["gitFolder"]
    return dView
 end _InitLocalArray
 

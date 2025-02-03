@@ -12,6 +12,99 @@ version: 0.2
 
 --> Working on
 -
+
+--> Git | Init
+-
+function git_GetInit repoName
+   -- put the git_Folder of stack projectName into gitFolder
+   -- put git_GetCheckoutFolder (repoFolder) into repoRootFolder
+   
+   put git_InvisibleFolder (repoName) into gitInvisibleFolder
+   return gitInvisibleFolder is not empty
+end git_GetInit
+
+command git_SetInit repoFolder
+   put the defaultfolder into oDefault
+   set the defaultfolder to repoFolder
+   --
+   put git_PathToCommandLine() into gitPath
+   put gitPath & "git init" into someShell
+   put shell (someShell) into sResult
+   --
+   set the defaultfolder to oDefault
+   return sResult
+end git_SetInit
+
+command git_InitFolder gitRootFolder, pDontAdd
+   put the defaultfolder into oDefault
+   set the defaultfolder to gitRootFolder
+   
+   git_AddIgnore gitRootFolder
+   
+   git_SetInit repoFolder
+   put the result into shellResult
+   lcw_Notify shellResult
+   
+   get word 1 to 5 of shellResult
+   if it is not "Initialized empty Git repository in" and it is not "Reinitialized existing Git repository in" then
+      lcw_Notify shellResult
+      set the defaultfolder to oDefault
+      exit to top
+   end  if
+   
+   if pDontAdd is not true then
+      git_AddEverything gitRootFolder
+      put the result into shellResult
+      if shellResult is not empty then
+         lcw_Notify shellResult
+         breakpoint
+         -- exit to top
+      end if
+   end if
+   
+   -- git_SetRootFolder gitRootFolder
+   git_AddRootFolderToIndex gitRootFolder
+   
+   set the defaultfolder to oDefault
+   return gitRootFolder
+end git_InitFolder
+
+command git_AddIgnore gitRootFolder
+   text_AddTrailing gitRootFolder, slash
+   put ".DS_Store" into gitIgnoreText
+   put gitIgnoreText into url ("file:" & gitRootFolder & ".gitignore")
+end git_AddIgnore
+
+command git_RemoveDsStore
+   put "find . -name .DS_Store -print0 | xargs -0 git rm -f --ignore-unmatch" into someShell
+end git_RemoveDsStore
+
+
+--> GIT | Folders
+-
+getprop git_Folder
+   put the mainstack_File of the target into somePath
+   try
+      -- if git is installed
+      put git_GetCheckoutFolder (somePath) into repoRootFolder
+   catch e
+      put git_FindCheckoutFolder (somePath) into repoRootFolder
+   end try
+   return repoRootFolder
+end git_Folder
+
+function git_InvisibleFolder repoName
+   put git_ConstructInvisibleFolder (repoName) into gitFolder
+   if there is not folder gitFolder then return empty
+   return gitFolder
+end git_InvisibleFolder
+
+function git_ConstructInvisibleFolder repoName
+   put repoName & "/.git/" into rGitPath
+   put env_GetRepoFolder (rGitPath) into gitFolder
+   return gitFolder
+end git_ConstructInvisibleFolder
+
 function git_GetRootFolder
    -- should make optional as git should be accessible using shell without exact path.
    -- used to get "git_CommitHash" for "github_GetPermalink"
@@ -31,16 +124,29 @@ getprop git_RelativeFolder
    return gitFolder
 end git_RelativeFolder
 
-getprop git_Folder
-   put the mainstack_File of the target into somePath
-   try
-      -- if git is installed
-      put git_GetCheckoutFolder (somePath) into repoRootFolder
-   catch e
-      put git_FindCheckoutFolder (somePath) into repoRootFolder
-   end try
-   return repoRootFolder
-end git_Folder
+
+--> GIT | Folders | Old
+-
+function git_FindDotGitFolder someFile
+   if someFile is empty then return false
+   
+   put someFile into folderAbove
+   set the itemdelimiter to "/"
+   put the directory into oDirectory
+   repeat
+      delete item -1 of folderAbove
+      if folderAbove is empty then exit repeat
+      
+      set the directory to folderAbove
+      put the folders into shortFolders
+      if ".git" is among the lines of shortFolders then
+         set the directory to oDirectory
+         return folderAbove & "/.git"
+      end if
+   end repeat
+   set the directory to oDirectory
+   return empty
+end git_FindDotGitFolder
 
 function git_FindCheckoutFolder somePath
    -- slightly faster then "git_GetCheckoutFolder" (2 ticks)
@@ -246,55 +352,6 @@ function git_Version
 end git_Version
 
 
---> Git | Init
--
-command git_AddIgnore gitRootFolder
-   text_AddTrailing gitRootFolder, slash
-   put ".DS_Store" into gitIgnoreText
-   put gitIgnoreText into url ("file:" & gitRootFolder & ".gitignore")
-end git_AddIgnore
-
-command git_RemoveDsStore
-   put "find . -name .DS_Store -print0 | xargs -0 git rm -f --ignore-unmatch" into someShell
-end git_RemoveDsStore
-
-command git_InitFolder gitRootFolder, pDontAdd
-   put the defaultfolder into oDefault
-   set the defaultfolder to gitRootFolder
-   
-   git_AddIgnore gitRootFolder
-   
-   put git_PathToCommandLine() into gitPath
-   put gitPath & "git init" into someShell
-   put shell(someShell) into shellResult
-   
-   lcw_Notify shellResult
-   
-   get word 1 to 5 of shellResult
-   if it is not "Initialized empty Git repository in" and it is not "Reinitialized existing Git repository in" then
-      lcw_Notify shellResult
-      set the defaultfolder to oDefault
-      exit to top
-   end  if
-   
-   if pDontAdd is not true then
-      git_AddEverything gitRootFolder
-      put the result into shellResult
-      if shellResult is not empty then
-         lcw_Notify shellResult
-         breakpoint
-         -- exit to top
-      end if
-   end if
-   
-   -- git_SetRootFolder gitRootFolder
-   git_AddRootFolderToIndex gitRootFolder
-   
-   set the defaultfolder to oDefault
-   return gitRootFolder
-end git_InitFolder
-
-
 --> Git | Model
 -
 function git_GetProjectArray
@@ -347,30 +404,6 @@ function git_PathToCommandLine
    -- put "/opt/local/bin/" into gitPath
    return gitPath
 end git_PathToCommandLine
-
-
---> GIT | Folders
--
-function git_FindDotGitFolder someFile
-   if someFile is empty then return false
-   
-   put someFile into folderAbove
-   set the itemdelimiter to "/"
-   put the directory into oDirectory
-   repeat
-      delete item -1 of folderAbove
-      if folderAbove is empty then exit repeat
-      
-      set the directory to folderAbove
-      put the folders into shortFolders
-      if ".git" is among the lines of shortFolders then
-         set the directory to oDirectory
-         return folderAbove & "/.git"
-      end if
-   end repeat
-   set the directory to oDirectory
-   return empty
-end git_FindDotGitFolder
 
 
 --> Git | Model | Deps
