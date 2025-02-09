@@ -23,13 +23,8 @@ on mDoubleUp_GithubUpdate dView, projectName
       display_Environment true
    end if
    display_Project projectName
-   
-   /*
-   project_Start projectName
-   display_GitProjectStatus projectName
-   -- display_Project projectName
-   display_Environment
-   */
+   --
+   menu_Xterm dView
 end mDoubleUp_GithubUpdate
 
 
@@ -57,9 +52,24 @@ end _HomeStackPath
 
 --> Global | Github | Update | Line | Menu
 -
-on menu_GithubUpdateLine dView
-   put the params
-end menu_GithubUpdateLine
+on menu_Xterm dView
+   put the selected_Line of dView into projectName
+   put the project_Folder of stack projectName into sFolder
+   --
+   put xterm_FindView() into xtermBrowser
+   display_XtermAtFolder sFolder, "git status", xtermBrowser
+end menu_Xterm
+
+on menu_AddToGithub dView
+   put the selected_Line of dView into projectName
+   put the project_Folder of stack projectName into sFolder
+   --
+   put "cd" && kwote (sFolder, "'") into someShell
+   put ";" && merge ("gh repo create LiveCodeWorld/[[projectName]] --public --source=. --push") after someShell
+   --
+   put xterm_FindView() into xtermBrowser
+   display_Xterm someShell, xtermBrowser
+end menu_AddToGithub
 
 private on _
 end _
