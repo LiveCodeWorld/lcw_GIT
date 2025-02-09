@@ -52,12 +52,26 @@ end _HomeStackPath
 
 --> Global | Github | Update | Line | Menu
 -
+on menu_GitStatus dView
+   put the selected_Line of dView into projectName
+   put the project_Folder of stack projectName into gitFolder
+   --
+   display_GitFolderStatus gitFolder
+end menu_GitStatus
+
+on menu_AddEeverything dView
+   put the selected_Line of dView into projectName
+   put the project_Folder of stack projectName into gitFolder
+   --
+   git_AddEverything gitFolder
+end menu_AddEeverything
+
 on menu_Xterm dView
    put the selected_Line of dView into projectName
-   put the project_Folder of stack projectName into sFolder
+   put the project_Folder of stack projectName into gitFolder
    --
    put xterm_FindView() into xtermBrowser
-   display_XtermAtFolder sFolder, "git status", xtermBrowser
+   display_XtermAtFolder gitFolder, "git status", xtermBrowser
 end menu_Xterm
 
 on menu_AddToGithub dView
