@@ -354,6 +354,14 @@ command github_CreateProject repoName, gitFolder, repoDescription
    --
    put githubProjectArray ["clone_url"] into gitRemoteAddress
    if gitRemoteAddress is empty then
+      -- {"message":"Bad credentials","documentation_url":"https://docs.github.com/rest","status":"401"}
+      put githubProjectArray ["message"] into gMessage
+      switch gMessage
+         case "Bad credentials"
+            breakpoint
+            display_XtermAtFolder gitFolder, "las -la"
+            break
+      end switch
       breakpoint
       exit to top
    end if

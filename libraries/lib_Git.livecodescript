@@ -14,6 +14,18 @@ It has not been tested on unix (should work fine), or Windows machines (beware o
 
 --> Working On
 -
+command git_CommitAndAdd gitFolder, someComment
+   -- If you only modified or deleted tracked files (no new files), you can use:
+   -- git commit -am "Readme and changes to lib_Git"
+   
+   put "git commit -am" into someShell
+   -- put space & "'" & someComment & "'" after someShell
+   put space & kwote (someComment) after someShell
+   --
+   put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
+   return shellResult
+end git_CommitAndAdd
+   
 command git_DiscardFolder gitFolder
    -- (use "git restore <file>..." to discard changes in working directory)
    -- https://git-scm.com/docs/git-restore
