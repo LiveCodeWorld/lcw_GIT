@@ -7,8 +7,7 @@ name: model_GitHub
 type: model
 version: 0.1
 
-
---> Working on
+--> Props
 -
 getprop github_ModuleUrl
    put the module_Name of the target into moduleName
@@ -19,9 +18,88 @@ getprop github_ModuleUrl
    return githubURL
 end github_ModuleUrl
 
+getprop github_ProjectURL [repoName]
+   put the project_Name of the target into projectName
+   if repoName is empty then put "LiveCodeWorld" into repoName
+   put merge ("https://github.com/[[repoName]]/[[projectName]]/") into someURL
+   return someURL
+end github_ProjectURL
 
---> Display | Github
+getprop github_LaunchURL
+   put the stack_Name of the target into stackName
+   put github_ConstructLaunchUrl (stackName) into githubURL
+   return githubURL
+end github_LaunchURL
+
+
+--> Working on
 -
+function github_RawModuleBehaviorUrl shortFile, moduleName, projectName
+   -- https://github.com/LiveCodeWorld/lcw_Wiki/raw/refs/heads/master/modules/View_Guide/behaviors/behavior_ViewGuide.livecodescript
+   put label_ShortMuleFolderFromName (moduleName) into shortModuleFolder
+   put github_ConstructModuleBehaviorUrl(shortFile, shortModuleFolder, projectName) into githubURL
+   return githubURL
+end github_RawModuleBehaviorUrl
+
+function github_ConstructModuleBehaviorUrl shortFile, shortModuleFolder, projectName
+   put github_RawModulesUrl (moduleName, projectName) into githubURL
+   put shortModuleFolder & slash after githubURL
+   put "behaviors/" & shortFile after githubURL
+   return githubURL
+end github_ConstructModuleBehaviorUrl
+
+function github_RawModulesUrl moduleName, projectName
+   -- https://github.com/LiveCodeWorld/lcw_Wiki/raw/refs/heads/master/modules/View_Guide/behaviors/behavior_ViewGuide.livecodescript
+   put "https://github.com/" into githubURL
+   put "LiveCodeWorld" into orgName
+   --
+   put orgName & slash after githubURL
+   put projectName & slash after githubURL
+   put "raw/refs/heads/master/modules/" after githubURL
+   return githubURL
+end github_RawModulesUrl
+
+function github_BehaviorUrlFromName bName, stackFileRoot, stackFileArray
+   put stackFile_PathFromName (bName, stackFileRoot, stackFileArray) into sPath
+   --
+   put file_GetShort (sPath) into shortFile
+   put env_ProjectNameFromPath (sPath) into projectName
+   put env_ModuleNameFromPath (sPath) into shortModuleFolder
+   put github_ConstructModuleBehaviorUrl (shortFile, shortModuleFolder, projectName) into githubURL
+   return githubURL
+end github_BehaviorUrlFromName
+
+function github_ConstructBehaviorUrl shortFile, moduleName, projectName
+   -- https://github.com/LiveCodeWorld/lcw_Wiki/blob/master/modules/View_Guide/behaviors/behavior_ViewGuide.livecodescript
+   put "https://github.com/" into githubURL
+   put "LiveCodeWorld" into orgName
+   --
+   put orgName & slash after githubURL
+   put projectName & slash after githubURL
+   put "blob/master/modules/" after githubURL
+   
+   put label_ShortMuleFolderFromName (moduleName) into shortModuleFolder
+   put shortModuleFolder & slash after githubURL
+   --
+   put shortFile & slash after githubURL
+   return githubURL
+end github_ConstructBehaviorUrl
+
+
+--> Old
+-
+function github_TransportURL shortFile, pRepoName   
+   -- need to switch stacks for .lc scripts
+   -- https://github.com/LiveCodeWorld/lcw_Controllers
+   -- /blob/master/
+   -- controllers/ward.lc
+   
+   put github_GetRepoUrl (pRepoName) into githubURL
+   put "/lcw_Controllers/blob/master/controllers/" & shortFile into relPath
+   put relPath after githubURL
+   return githubURL
+end github_TransportURL
+
 command gitHub_GoModule moduleName
    # Save and Remove from memory
    if exists (stack moduleName) then
@@ -86,40 +164,12 @@ command go_GitHub projectName
 end go_GitHub
 
 
---> Launch
+--> Github | URL
 -
 command github_Launch repoName, pPath
    put github_URLFromPath (pPath, repoName) into githubURL
    launch url githubURL
 end github_Launch
-
-getprop github_ProjectURL [repoName]
-   put the project_Name of the target into projectName
-   if repoName is empty then put "LiveCodeWorld" into repoName
-   put merge ("https://github.com/[[repoName]]/[[projectName]]/") into someURL
-   return someURL
-end github_ProjectURL
-
-getprop github_LaunchURL
-   put the stack_Name of the target into stackName
-   put github_ConstructLaunchUrl (stackName) into githubURL
-   return githubURL
-end github_LaunchURL
-
-
---> Github | URL
--
-function github_TransportURL shortFile, pRepoName
-   -- need to switch stacks for .lc scripts
-   -- https://github.com/LiveCodeWorld/lcw_Controllers
-   -- /blob/master/
-   -- controllers/ward.lc
-   
-   put github_GetRepoUrl (pRepoName) into githubURL
-   put "/lcw_Controllers/blob/master/controllers/" & shortFile into relPath
-   put relPath after githubURL
-   return githubURL
-end github_TransportURL
 
 function github_ConstructLaunchUrl stackName, pRepoName
    if exists (stack stackName) is false then return empty
@@ -197,18 +247,6 @@ function github_ConstructModuleUrl moduleName, projectName
    return githubURL
 end github_ConstructModuleUrl
 
-private function _ConstructShortFile moduleName
-   put _ConstructShortFolder(moduleName) into shortFolder
-   put shortFolder & ".livecode" into shortFile
-   return shortFile
-end _ConstructShortFile
-
-private function _ConstructShortFolder moduleName
-   put moduleName into shortModuleFolder
-   replace "|" with "_" in shortModuleFolder
-   return shortModuleFolder
-end _ConstructShortFolder
-
 
 --> Github | URL
 -
@@ -230,3 +268,18 @@ function github_GetRepoUrl pRepoName
    put github_ExtractHtmlUrl (repoArray) into githubURL
    return githubURL
 end github_GetRepoUrl
+
+
+--> Private
+-
+private function _ConstructShortFile moduleName
+   put _ConstructShortFolder(moduleName) into shortFolder
+   put shortFolder & ".livecode" into shortFile
+   return shortFile
+end _ConstructShortFile
+
+private function _ConstructShortFolder moduleName
+   put moduleName into shortModuleFolder
+   replace "|" with "_" in shortModuleFolder
+   return shortModuleFolder
+end _ConstructShortFolder

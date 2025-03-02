@@ -110,23 +110,6 @@ getprop git_StatusArray
 end git_StatusArray
 
 
---> Deps
--
-command folder_SetEnclosingDefault someFile
-   put folder_GetEnclosing (someFile) into enclosingFolder
-   put the defaultFolder into oFolder
-   set the defaultFolder to enclosingFolder
-   return oFolder
-end folder_SetEnclosingDefault
-
-function folder_GetEnclosing someFile
-   put someFile into enclosingFolder
-   set the itemdelimiter to slash
-   delete item -1 of enclosingFolder
-   return enclosingFolder
-end folder_GetEnclosing
-
-
 --> Git | Branch
 -
 command git_PushBranch gitFolder, pBranchName
@@ -1091,7 +1074,7 @@ end git_ConstructFileRevision
 -
 getprop script_CommitComment
    put the long id of the target into scriptObject
-   put autoCommitComment (scriptObject) into commitComment
+   put _AutoCommitComment (scriptObject) into commitComment
    return commitComment
 end script_CommitComment
 
@@ -1202,7 +1185,7 @@ end git_Pull
 
 command git_CommitScriptFile scriptObject
    put the script of scriptObject into someScript
-   put autoCommitComment (scriptObject) into pCommitComment
+   put _AutoCommitComment (scriptObject) into pCommitComment
    if the optionkey is "Down" then
       put lcw_Ask ("Describe your changes...", pCommitComment, false) into pCommitComment
    end if
@@ -1392,11 +1375,6 @@ command git_DeleteInvisibleRepoFolder gitFolder
    return invisibleRepoFolder
 end git_DeleteInvisibleRepoFolder
 
-function git_ScriptFile shortFileBit
-   put git_GetRootFolder() into rootFolder
-   return repository_ConstructScriptPath(shortFileBit, rootFolder)
-end git_ScriptFile
-
 command git_NormalizeTreeish @treeish
    set the itemdelimiter to ":"
    put item 1 of treeish into someHash
@@ -1412,10 +1390,9 @@ end git_NormalizeTreeish
 --> GIT | Hash
 -
 function git_GetLastCommitHash relativePath
-   -- seems slow
    shell_BashParamEscape relativePath
    put merge("git rev-list -1 HEAD -- [[relativePath]]") into someShell
-   put git_ExecuteShellCommand(someShell) into shellResult
+   put git_ExecuteShellCommand (someShell) into shellResult
    return shellResult
 end git_GetLastCommitHash
 
@@ -1616,60 +1593,7 @@ command git_CloneAndFetch gitURL, pNewRepoFolder
 end git_CloneAndFetch
 
 
---> Repo
--
-function repo_FetchStatusOutline
-   put url "http://www.rev-co.de/cgi-bin/git_Status.cgi" into someOutline
-   return someOutline
-end repo_FetchStatusOutline
-
-function repository_ConstructScriptPath shortFileBit, rootFolder
-   put rootFolder & "opn_Plugins/" into opnPluginsFolder
-   put opnPluginsFolder & "opn_Text/rev/" into revTextFolder
-   put revTextFolder & shortFileBit into scriptTextFile
-   
-   set the itemdelimiter to "/"
-   if char -1 of scriptTextFile = "/" then
-      put scriptTextFile into testFolder
-   else
-      put item 1 to -2 of scriptTextFile into testFolder
-   end if
-   folder_CreateNested testFolder
-   
-   return scriptTextFile
-end repository_ConstructScriptPath
-
-command repository_SetCommitComment @someComment
-   if someComment is empty then
-      ask "Give a comment to this commit..." with "auto opn commit"
-      if it is empty then
-         -- lcw_Notify "Sorry, I did not commit these changes as the comment was empty!"
-         exit to top
-      end if
-      put it into someComment
-   end if
-end repository_SetCommitComment
-
-
---> Repository | Local | Event | Helpers
--
-command repository_Add someFile, fileIsNew, pCommitComment
-   -- file has been created or updated
-   switch repository_GetType()
-      case "svn"
-         if fileIsNew is true then svn_Add someFile
-         break
-      case "git"
-         if pCommitComment is empty then put "opn auto-commit" into pCommitComment
-         
-         -- if fileIsNew is true then git_AddFile someFile
-         git_CommitFile someFile, pCommitComment
-         break
-   end switch
-end repository_Add
-
-
---> Deps | File
+--> Deps
 -
 command file_CreateBinary binaryText, pFile
    /*
@@ -1724,10 +1648,24 @@ function file_IsVersioned someFile
    end switch
 end file_IsVersioned
 
+command folder_SetEnclosingDefault someFile
+   put folder_GetEnclosing (someFile) into enclosingFolder
+   put the defaultFolder into oFolder
+   set the defaultFolder to enclosingFolder
+   return oFolder
+end folder_SetEnclosingDefault
+
+function folder_GetEnclosing someFile
+   put someFile into enclosingFolder
+   set the itemdelimiter to slash
+   delete item -1 of enclosingFolder
+   return enclosingFolder
+end folder_GetEnclosing
+
 
 --> Private
 -
-private function autoCommitComment scriptObject, textLine
+private function _AutoCommitComment scriptObject, textLine
    put the internet date into someDate
    delete word -1 of someDate
    put someDate & ":  changed script" && the mobile_Name of scriptObject into someSuggestion
@@ -1737,4 +1675,4 @@ private function autoCommitComment scriptObject, textLine
    if textLine is empty then put "OPN auto-commit" into textLine
    put textLine after someSuggestion
    return someSuggestion
-end autoCommitComment
+end _AutoCommitComment
