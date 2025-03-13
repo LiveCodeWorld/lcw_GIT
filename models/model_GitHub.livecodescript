@@ -36,7 +36,7 @@ end github_LaunchURL
 -
 function github_RawModuleBehaviorUrl shortFile, moduleName, projectName
    -- https://github.com/LiveCodeWorld/lcw_Wiki/raw/refs/heads/master/modules/View_Guide/behaviors/behavior_ViewGuide.livecodescript
-   put label_ShortMuleFolderFromName (moduleName) into shortModuleFolder
+   put label_ShortModuleFolderFromName (moduleName) into shortModuleFolder
    put github_ConstructModuleBehaviorUrl(shortFile, shortModuleFolder, projectName) into githubURL
    return githubURL
 end github_RawModuleBehaviorUrl
@@ -78,7 +78,7 @@ function github_ConstructBehaviorUrl shortFile, moduleName, projectName
    put projectName & slash after githubURL
    put "blob/master/modules/" after githubURL
    
-   put label_ShortMuleFolderFromName (moduleName) into shortModuleFolder
+   put label_ShortModuleFolderFromName (moduleName) into shortModuleFolder
    put shortModuleFolder & slash after githubURL
    --
    put shortFile & slash after githubURL
