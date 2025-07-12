@@ -129,21 +129,6 @@ end gitHub_GoModule
 
 --> Github | Go
 -
-command gitHub_Go projectName
-   if exists (stack projectName) then
-      delete stack projectName
-   end if
-   --
-   put github_ConstructProjectUrl (projectName) into rawURL
-   go to stack url rawURL
-   --
-   if the result is empty then
-      return  rawURL
-   else
-      return "error," & the result
-   end if
-end gitHub_Go
-
 command github_LaunchStack stackName, pRepoName
    if exists (stack stackName) is false then return empty
    --
@@ -157,11 +142,6 @@ command github_LaunchTransport shortFile, pRepoName
    put github_TransportURL (shortFile, pRepoName) into githubURL
    launch url githubURL
 end github_LaunchTransport
-
-command go_GitHub projectName
-   gitHub_Go projectName
-   return the result
-end go_GitHub
 
 
 --> Github | URL

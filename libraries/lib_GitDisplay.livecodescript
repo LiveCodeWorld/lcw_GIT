@@ -519,6 +519,12 @@ end display_GitPushCurrentBranch
 -
 command display_GitStatus sObject
    put the git_Folder of sObject into gitFolder
+   if there is not a folder gitFolder then
+      breakpoint
+      put "The git_Folder of sObject does not exist:" && sObject into sComment
+      put sComment
+      lcw_AnswerWarning sComment
+   end if
    --
    display_GitFolderStatus gitFolder
    put the result into arrayView

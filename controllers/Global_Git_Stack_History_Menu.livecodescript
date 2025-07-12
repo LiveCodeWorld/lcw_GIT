@@ -35,6 +35,6 @@ end menu_FileHistory
 private on _
 end _
 
-on menu_DisplayGitStatus
-   display_GitStatus
+on menu_DisplayGitStatus sObject
+   display_GitStatus sObject
 end menu_DisplayGitStatus
