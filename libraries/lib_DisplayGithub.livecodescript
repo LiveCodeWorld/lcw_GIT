@@ -84,7 +84,7 @@ command display_GitLocalConfig gitFolder
 end display_GitLocalConfig
 
 command display_GitHubInfo repoName
-   put github_FetchRepoArray (repoName) into repoArray
+   put gh_FetchRepoArray (repoName) into repoArray
    display_Array repoArray
 end display_GitHubInfo
 

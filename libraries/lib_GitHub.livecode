@@ -17,7 +17,7 @@ The gist library is seperate and moving forwards we wil create individual librar
 
 --> Variables
 -
-constant GithubApiVersio = "X-GitHub-Api-Version:2022-11-28"
+constant GithubApiVersion = "X-GitHub-Api-Version:2022-11-28"
 constant ApiDate = "2022-11-28"
 constant AcceptType = "Accept: application/vnd.github+json"
 
@@ -36,6 +36,12 @@ end shell_OneLine
 
 --> Working on
 -
+function github_FetchOrgRepoAray pOrgName
+   put github_FetchOrgRepoListJson (pOrgName) into someJSON
+   put json_ToArray (someJSON) into reposArray
+   return reposArray
+end github_FetchOrgRepoAray
+
 command github_DownloadProject projectName, lcwRoot
    -- this should use git to clone a project to the lcwRoot folder
    -- and return the path to the projects home stack folder
@@ -576,7 +582,7 @@ end script_GetHandlerMarkdown
 --> GitHub | Create
 -
 function github_FetchSshUrl repoName
-   put github_FetchRepoArray (repoName) into repoArray
+   put gh_FetchRepoArray (repoName) into repoArray
    put repoArray ["ssh_url"] into remoteSshUrl
    return remoteSshUrl
 end github_FetchSshUrl
@@ -678,38 +684,12 @@ command github_CreateOrgRepo rName, rDesc, pOrgName, pHomePage
    return postResult
 end github_CreateOrgRepo
 
-function github_ExtractHtmlUrl repoArray
-   put repoArray ["html_url"] into githubURL
-   return githubURL
-end github_ExtractHtmlUrl
-
-command github_DeconstructRepoArray repoArray, @remoteAddress, @htmlURL, @cloneURL, @gitURL
-   put repoArray ["clone_url"] into cloneURL
-   put repoArray ["git_url"] into gitURL
-   put repoArray ["html_url"] into htmlURL
-   put repoArray ["ssh_url"] into remoteAddress
-end github_DeconstructRepoArray
-
-function github_FetchOrgRepoAray pOrgName
-   put github_FetchOrgRepoListJson (pOrgName) into someJSON
-   put json_ToArray (someJSON) into reposArray
-   return reposArray
-end github_FetchOrgRepoAray
-
 function github_FetchOrgRepoListJson pOrgName
    if pOrgName is empty then put "LiveCodeWorld" into pOrgName
    put merge ("/orgs/[[pOrgName]]/repos") into restPath
    put github_RestGet (restPath) into someJSON
    return someJSON
 end github_FetchOrgRepoListJson
-
-function github_FetchRepoArray repoName, pOwner
-   if pOwner is empty then put "LiveCodeWorld" into pOwner
-   put merge ("/repos/[[pOwner]]/[[repoName]]") into restPath
-   put github_RestGet (restPath) into someJSON
-   put json_ToArray (someJSON) into repoArray
-   return repoArray
-end github_FetchRepoArray
 
 
 --> GitHub | REST
@@ -768,7 +748,7 @@ private command _SetAuthHeaders pKeyName
    */  
    -- put "Accept: application/vnd.github.v3+json" into someHeader
    put "Accept: application/vnd.github+json" into someHeader
-   put CR & GithubApiVersio after someHeader
+   put CR & GithubApiVersion after someHeader
    --
    switch pKeyName
       case "no auth"

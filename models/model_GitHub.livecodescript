@@ -7,6 +7,109 @@ name: model_GitHub
 type: model
 version: 0.1
 
+
+--> Working on
+-
+command display_GithubStack
+   lcw_AnswerStack "Choose a stack..."
+   put the result into sPath
+   --
+   ghurl_GoPath sPath
+end display_GithubStack
+
+
+--> Ghurl | Path
+-
+/*
+These handlers don;t make sense for web
+*/
+command github_Go stackName, pRepoName
+   if exists (stack stackName) is false then
+      return "Error, stack does not exist:" && stackName
+   end if
+   
+   put the filename of stack stackName into sPath
+   if sPath is empty then
+      return "Error, stack does not have a path:" && stackName
+   end if
+   
+   ghurl_GoPath sPath, pRepoName
+   get the filename of stack stackName
+   return the result
+end github_Go
+
+command ghurl_GoPath sPath, pOrgName
+   if the platform is "web" then return "Error"
+   
+   if there is a stack sPath then
+      if the platform is web then
+         # Go locally
+         go to stack sPath
+         return the result
+      else
+         # Remove from memory
+         delete stack sPath
+         
+         # Go
+         put ghurl_RawFromPath (sPath, pOrgName) into ghURL
+         go to stack url ghURL
+         return the result
+      end if
+   else
+      put ghurl_RawFromPath (sPath, pOrgName) into ghURL
+      go to stack url ghURL
+      return the result
+   end if
+end ghurl_GoPath
+
+function ghurl_RawFromPath sPath, pOrgName
+   -- https://github.com/LiveCodeWorld/lcw_Wiki/raw/refs/heads/master/modules/View_Wiki_Panel/View_Wiki_Panel.livecode
+   if the platform is "web" then return "Error"
+   
+   put ghurl_BaseUrl (pOrgName) into ghBaseURL
+   --
+   put env_GetRepoFolder() into repoFolder
+   set the itemdelimiter to slash
+   put the number of items of repoFolder + 1 into pNum
+   put item pNum of sPath into pName
+   put item (pNum+1) to -1 of sPath into rGitPath
+   --   
+   put ghurl_RawUrl (pName, rGitPath, ghBaseURL) into ghURL
+   return ghURL
+end ghurl_RawFromPath
+
+
+--> GH
+-
+function gh_UrlFromRepo pRepoName
+   put gh_FetchRepoArray (pRepoName) into repoArray
+   put repoArray ["git_url"] into gitURL
+   text_AddTrailing ghURL, slash
+   return ghURL
+end gh_UrlFromRepo
+
+function gh_ExtractHtmlUrl repoArray
+   put repoArray ["html_url"] into githubURL
+   return githubURL
+end gh_ExtractHtmlUrl
+
+command gh_DeconstructRepoArray repoArray, @remoteAddress, @htmlURL, @cloneURL, @gitURL
+   put repoArray ["clone_url"] into cloneURL
+   put repoArray ["git_url"] into gitURL
+   put repoArray ["html_url"] into htmlURL
+   put repoArray ["ssh_url"] into remoteAddress
+end gh_DeconstructRepoArray
+
+function gh_FetchRepoArray repoName, pOwner
+   if pOwner is empty then put "LiveCodeWorld" into pOwner
+   put merge ("/repos/[[pOwner]]/[[repoName]]") into restPath
+   --
+   put github_RestGet (restPath, repoName) into someJSON
+   put json_ToArray (someJSON) into repoArray
+   return repoArray
+end gh_FetchRepoArray
+
+
 --> Props
 -
 getprop github_ModuleUrl
@@ -32,7 +135,7 @@ getprop github_LaunchURL
 end github_LaunchURL
 
 
---> Working on
+--> Github | Behavior
 -
 function github_RawModuleBehaviorUrl shortFile, moduleName, projectName
    -- https://github.com/LiveCodeWorld/lcw_Wiki/raw/refs/heads/master/modules/View_Guide/behaviors/behavior_ViewGuide.livecodescript
@@ -94,7 +197,7 @@ function github_TransportURL shortFile, pRepoName
    -- /blob/master/
    -- controllers/ward.lc
    
-   put github_GetRepoUrl (pRepoName) into githubURL
+   put ghurl_BaseUrl (pRepoName) into githubURL
    put "/lcw_Controllers/blob/master/controllers/" & shortFile into relPath
    put relPath after githubURL
    return githubURL
@@ -173,7 +276,7 @@ function github_URLFromPath somePath, pRepoName
    put item projectRootNum of somePath into projectName
    delete item 1 to projectRootNum of somePath
    --
-   put github_GetRepoUrl (pRepoName) & slash into githubURL
+   put ghurl_BaseUrl (pRepoName) & slash into githubURL
    put projectName & "/blob/master/" after githubURL
    put somePath after githubURL
    return githubURL
@@ -240,14 +343,6 @@ function github_ConstructRepoUrl pRepoName
    if pRepoName is empty then put "LiveCodeWorld" into pRepoName
    return "https://github.com/" & pRepoName
 end github_ConstructRepoUrl
-
-function github_GetRepoUrl pRepoName
-   if pRepoName is empty then return "https://github.com/LiveCodeWorld"
-   --
-   put github_FetchRepoArray (pRepoName) into repoArray
-   put github_ExtractHtmlUrl (repoArray) into githubURL
-   return githubURL
-end github_GetRepoUrl
 
 
 --> Private
