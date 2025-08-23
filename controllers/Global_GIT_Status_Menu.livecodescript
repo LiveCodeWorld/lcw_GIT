@@ -36,6 +36,35 @@ end disabled_RemoveLockFiles
 
 --> Global | GIT | Status | Menu
 -
+on menu_RemoveLockFiles dView
+   put _GitFolder (dView) into gitFolder
+   --
+   git_ClearLocks gitFolder
+end menu_RemoveLockFiles
+
+on menu_UpdateViewOfRemote dView
+   -- Update your local view of the remote
+   put _GitFolder (dView) into gitFolder
+   --
+   get git_UpdateViewOfRemote (gitFolder)
+   put it & CR&CR & git_ShortBranchStatus (gitFolder)
+end menu_UpdateViewOfRemote
+
+on menu_ForceLocal dView
+   -- Update your local view of the remote
+   put _GitFolder (dView) into gitFolder
+   --
+   put "push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD)" into gitBit
+   put git_ExecuteBit (gitBit, gitFolder)
+end menu_ForceLocal
+
+on menu_SwitchToMaster dView
+   put _GitFolder (dView) into gitFolder
+   --
+   git_CheckoutMaster gitFolder
+   put the result
+end menu_SwitchToMaster
+
 on menu_CheckLockFiles dView
    put _GitFolder (dView) into gitFolder
    --
@@ -81,27 +110,6 @@ end menu_OpenInTerminal
 
 on ___
 end ___
-
-on menu_RemoveLockFiles dView
-   put _GitFolder (dView) into gitFolder
-   --
-   git_ClearLocks gitFolder
-end menu_RemoveLockFiles
-
-on menu_UpdateViewOfRemote dView
-   -- Update your local view of the remote
-   put _GitFolder (dView) into gitFolder
-   --
-   get git_UpdateViewOfRemote (gitFolder)
-   put it & CR&CR & git_ShortBranchStatus (gitFolder)
-end menu_UpdateViewOfRemote
-
-on menu_SwitchToMaster dView
-   put _GitFolder (dView) into gitFolder
-   --
-   git_CheckoutMaster gitFolder
-   put the result
-end menu_SwitchToMaster
 
 on submenu_Dev
    return "Global | GIT | Status | Dev | Menu"
