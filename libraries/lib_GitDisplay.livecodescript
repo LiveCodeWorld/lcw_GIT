@@ -48,7 +48,13 @@ command display_GitFolderStatus gitFolder, pExpandedItems, pRectHow
       put the name of me into cContext
       --
       -- display_Data statusArray, gitShortFolder, "GIT Status"
-      display_StandardTool statusArray, gitShortFolder, "GIT Status", "tree", pRectHow, foldedArray, cContext
+      -- display_StandardTool statusArray, gitShortFolder, "GIT Status", "tree", pRectHow, foldedArray, cContext
+      
+      put empty into pRect
+      put "Branch" into pExpanded
+      put "Global | GIT | Line | File | Menu" into fTitle
+      --
+      display_Tree statusArray, gitShortFolder, "GIT Status", fTitle, pExpanded, pRect, cContext
       put the result into displayView
       
       # Old untidy naming of tools

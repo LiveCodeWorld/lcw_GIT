@@ -20,9 +20,9 @@ getprop menu_IconArray
    local fData
    put the name of me into mController
    --
-   iconData_Add fData, "menu_DisplayGitStatus", mController, "Phosphor Regular/file plus"
-   iconData_Add fData, "menu_Pull", mController, "tabler/file check", "Pull"
-   iconData_Add fData, "menu_PushCurrentBranch", mController, "Phosphor Regular/list checks", "Status"
+   iconData_Add fData, "menu_DisplayGitStatus", mController, "octicons/globe 16", "Status"
+   iconData_Add fData, "menu_Pull", mController, "octicons/git pull request 16", "Pull"
+   iconData_Add fData, "menu_PushCurrentBranch", mController, "goal 24", "Push"
    --
    return fData
 end menu_IconArray
@@ -30,13 +30,14 @@ end menu_IconArray
 getprop menu_Target [tObject]
    put the tree_View of tObject into treeView
    --
-   _InitLocalArray tObject
+   put _GitSettingsModel (tObject) into gitSettingsModel
    --
    return treeView
 end menu_Target
 
-private function _GitFolder dView
-   put LocalArray ["sModel"]["gitFolder"] into gitFolder
+private function _GitFolder treeView
+   put _GitSettingsModel (treeView) into gitSettingsModel
+   put gitSettingsModel ["gitFolder"] into gitFolder
    return gitFolder
 end _GitFolder
 
@@ -45,15 +46,14 @@ private command _Refresh dView
    display_GitRefreshProjectName projectName
 end _Refresh
 
-private command _InitLocalArray tObject
+private function _GitSettingsModel tObject
    put the display_View of tObject into dView
-   put the git_SettingsModel of dView into LocalArray
-   put dView into LocalArray ["displayView"]
+   put the git_SettingsModel of dView into LocalArray ["sModel"]
    --
-   put the title_Text of tObject into repoName
-   put repoName into LocalArray ["projectName"]
-   return dView
-end _InitLocalArray
+   put dView into LocalArray ["displayView"]
+   put the title_Text of tObject into LocalArray ["projectName"]
+   return LocalArray ["sModel"]
+end _GitSettingsModel
 
 private function _LocalValue someKey
    return LocalArray [someKey]
@@ -129,13 +129,13 @@ getprop disabled_RefreshGitStatus
    end if
 end disabled_RefreshGitStatus
 
-getprop disabled_DisplayGitStatus
-   if _LocalValue ("gitFolder") is empty then
-      return true
-   end if
+getprop disabled_DisplayGitStatus [treeView]
+   put _GitSettingsModel (treeView) into gitSettingsModel
+   put gitSettingsModel ["gitFolder"] into gitFolder
    
-   put _LocalValue ("projectName") into projectName
+   put gitSettingsModel ["projectName"] into projectName
    if _ExistsGitStatusDisplay (projectName) then
+      return true
       return "delete"
    else
       return false
@@ -146,7 +146,7 @@ end disabled_DisplayGitStatus
 --> Global | GIT | Basics | Menu
 -
 on menu_DisplayGitStatus treeView
-   put _GitFolder(dView) into gitFolder
+   put _GitFolder (treeView) into gitFolder
    --
    stack_SaveEdited "all"
    display_GitFolderStatus gitFolder

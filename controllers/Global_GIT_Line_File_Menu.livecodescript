@@ -111,6 +111,9 @@ getprop menu_IconArray
    iconData_Add fData, "menu_StageThenCommit", mController, "tabler/file check", "Stage"
    iconData_Add fData, "menu_RefreshGitStatus", mController, "Phosphor Regular/list checks", "Status"
    --
+   put the name of stack "Global | Git | Basics | Menu" into  mController
+   iconData_Add fData, "menu_PushCurrentBranch", mController, "goal 24", "Push"
+   --
    return fData
 end menu_IconArray
 
