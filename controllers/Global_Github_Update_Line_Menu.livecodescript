@@ -25,9 +25,12 @@ on doubleClick_Message dView, projectName
       display_Environment true
    end if
    --
-   display_Project projectName
    display_GitProjectStatus projectName
-   menu_Xterm dView
+   
+   if the shiftKey is "Down" then
+      menu_Xterm dView
+      display_Project projectName
+   end if
 end doubleClick_Message
 
 
