@@ -10,7 +10,127 @@ version: 0.9
 /*
 A library for working with GIT.
 It has not been tested on unix (should work fine), or Windows machines (beware of line ending issues).
+
+command git_StageThenCommit gitFolder, pExpandedItems
+   put lcw_Ask ("Comment on this change...", "Minor changes") into someComment
+   git_Commit sComment, gitFolder
+   put the result into gitResult
+   display_GitFolderStatus gitFolder, pExpandedItems
+   return gitResult
+end git_StageThenCommit
 */
+
+--> Git | Execute
+-
+function git_ExecuteBit gitBit, gitFolder
+   -- we assume git is on the path
+   put "git -C" && quote & gitFolder & quote && gitBit into sShell
+   put shell (sShell) into shellResult
+   return shellResult
+end git_ExecuteBit
+
+
+--> Git | Execute | Path (when git is not on path)
+-
+function git_ExecuteShellCommand someShell, pCheckoutFolder
+   git_ExecuteShell someShell, pCheckoutFolder
+   return the result
+end git_ExecuteShellCommand
+
+command git_ExecuteShell someShell, pGitRootFolder
+   put git_PathToCommandLine() into gitPath
+   if pGitRootFolder is empty then put git_GetRootFolder() into pGitRootFolder
+   put shell_ExecuteAtRoot (someShell, pGitRootFolder, gitPath) into shellResult
+   return word 1 to -1 of shellResult
+end git_ExecuteShell
+
+private command _NormFolder @gitFolder
+   if there is a file gitFolder then
+      set the itemdelimiter to slash
+      put empty into item -1 of gitFolder
+   end if
+end _NormFolder
+
+
+--> Git | Commit
+-
+command git_AddAndCommit gitFolder, someComment
+   -- ues "git_Commit"
+   /*
+   -a (short for --all) → Automatically stages all modified and deleted files (but not new, untracked files).
+   -a (aka --all) → auto-stage all tracked files that you’ve modified or deleted, then commit.
+   It’s basically git add -u followed by git commit.
+   Does NOT include new, untracked files — you must git add those first.
+   */
+   _NormFolder gitFolder
+   if there is not a folder gitFolder then
+      return "Error, folder does not exist:" && gitFolder
+   end if
+   
+   # gitBit
+   put "commit -am" into gitBit
+   put space & kwote (someComment) after gitBit
+   put git_ExecuteBit (gitBit, gitFolder) into shellResult
+   
+   -- put "git" && gitBit into someShell
+   -- put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
+   return shellResult
+end git_AddAndCommit
+
+command git_StageCommitTracked gitFolder, sComment
+   /*
+   Stage only changes to tracked files (mods + deletions, no new files), then commit:
+   - https://livecode.wiki/git-commit.html
+   
+   git commit -am "message" -- (Same as:  git add -u && git commit -m "message"   )
+   */
+   if there is not a folder gitFolder then
+      return "Error, folder does not exist:" && gitFolder
+   end if
+   _SetCommitMessage sComment
+   
+   put space & "commit -am '" & sComment & "'" after gitBit
+   put git_ExecuteBit (gitBit, gitFolder) into sResult
+   return sResult
+end git_StageCommitTracked
+
+private command _SetCommitMessage @sComment
+   if sComment is empty then
+      ask "Give a comment to this commit..." with "lcw commit"
+      if it is empty then exit to top
+      put it into someComment
+   end if
+end _SetCommitMessage
+   
+command git_Commit sComment, gitFolder, pAddAll, pViewDiff   
+   _NormFolder gitFolder
+   if there is not a folder gitFolder then
+      return "Error, folder does not exist:" && gitFolder
+   end if
+   _SetCommitMessage sComment
+   
+   put "commit" into gitBit
+   if pAddAll is not false then put space & "-a" after gitBit
+   if pViewDiff is not false then put space & "-v" after gitBit
+   put space & "-m '" & sComment & "'" after gitBit
+   
+   put git_ExecuteBit (gitBit, gitFolder) into shellResult
+   
+   -- put "git" && gitBit into someShell
+   -- put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
+   return shellResult
+end git_Commit
+
+command git_StageForCommit gitFolder
+   _NormFolder gitFolder
+   if there is not a folder gitFolder then
+      return "Error, folder does not exist:" && gitFolder
+   end if
+   
+   put git_ExecuteBit ("add -u", gitFolder) into shellResult
+   return shellResult
+end git_StageForCommit
+
 
 --> Working On
 -
@@ -95,89 +215,6 @@ function git_ActiveProcess
       return empty
    end if
 end git_ActiveProcess
-
-function git_ExecuteBit gitBit, gitFolder
-   -- we assume git is on the path
-   put "git -C" && kwote (gitFolder) && gitBit into sShell
-   put shell (sShell) into shellResult
-   return shellResult
-end git_ExecuteBit
-
-function git_ExecuteShellCommand someShell, pCheckoutFolder
-   git_ExecuteShell someShell, pCheckoutFolder
-   return the result
-end git_ExecuteShellCommand
-
-command git_ExecuteShell someShell, pGitRootFolder
-   put git_PathToCommandLine() into gitPath
-   if pGitRootFolder is empty then put git_GetRootFolder() into pGitRootFolder
-   put shell_ExecuteAtRoot (someShell, pGitRootFolder, gitPath) into shellResult
-   return word 1 to -1 of shellResult
-end git_ExecuteShell
-
-command git_StageForCommit gitFolder
-   _NormFolder gitFolder
-   if there is not a folder gitFolder then
-      return "Error, folder does not exist:" && gitFolder
-   end if
-   
-   put git_ExecuteBit ("add -u", gitFolder) into shellResult
-   return shellResult
-end git_StageForCommit
-
-private command _NormFolder @gitFolder
-   if there is a file gitFolder then
-      set the itemdelimiter to slash
-      put empty into item -1 of gitFolder
-   end if
-end _NormFolder
-
-command git_AddAndCommit gitFolder, someComment
-   -- ues "git_Commit"
-   /*
-   -a (short for --all) → Automatically stages all modified and deleted files (but not new, untracked files).
-   -a (aka --all) → auto-stage all tracked files that you’ve modified or deleted, then commit.
-   It’s basically git add -u followed by git commit.
-   Does NOT include new, untracked files — you must git add those first.
-   */
-   _NormFolder gitFolder
-   if there is not a folder gitFolder then
-      return "Error, folder does not exist:" && gitFolder
-   end if
-   
-   # gitBit
-   put "commit -am" into gitBit
-   put space & kwote (someComment) after gitBit
-   put git_ExecuteBit (gitBit, gitFolder) into shellResult
-   
-   -- put "git" && gitBit into someShell
-   -- put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
-   return shellResult
-end git_AddAndCommit
-   
-command git_Commit someComment, gitFolder, pAddAll, pViewDiff   
-   _NormFolder gitFolder
-   if there is not a folder gitFolder then
-      return "Error, folder does not exist:" && gitFolder
-   end if
-   
-   if someComment is empty then
-      ask "Give a comment to this commit..." with "lcw commit"
-      if it is empty then exit to top
-      put it into someComment
-   end if
-   
-   put "commit" into gitBit
-   if pAddAll is not false then put space & "-a" after gitBit
-   if pViewDiff is not false then put space & "-v" after gitBit
-   put space & "-m '" & someComment & "'" after gitBit
-   
-   put git_ExecuteBit (gitBit, gitFolder) into shellResult
-   
-   -- put "git" && gitBit into someShell
-   -- put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
-   return shellResult
-end git_Commit
 
 command git_DiscardFolder gitFolder
    -- (use "git restore <file>..." to discard changes in working directory)

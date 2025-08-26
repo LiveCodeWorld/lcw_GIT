@@ -18,12 +18,15 @@ local LocalArray
 --> Events
 -
 on doubleClick_Message dView, projectName
+   if the optionKey is "Down" then breakpoint
+   --
    if env_ProjectIsActive (projectName) is false then
       project_Start projectName
       display_Environment true
    end if
-   display_Project projectName
    --
+   display_Project projectName
+   display_GitProjectStatus projectName
    menu_Xterm dView
 end doubleClick_Message
 

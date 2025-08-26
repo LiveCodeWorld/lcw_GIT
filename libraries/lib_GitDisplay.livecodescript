@@ -23,7 +23,7 @@ end _SetSafeStackName
 
 --> Working on
 -
-command display_GitFolderStatus gitFolder, pExpandedItems
+command display_GitFolderStatus gitFolder, pExpandedItems, pRectHow
    if there is not a folder gitFolder then return empty
    put git_FetchStatusArray (gitFolder) into statusArray
    
@@ -35,37 +35,47 @@ command display_GitFolderStatus gitFolder, pExpandedItems
    
    if exists (displayView) then
       set the displayed_Data of displayView to statusArray
+      
+      # Work out folded
+      if pExpandedItems is not empty then
+         put display_ConstructFoldState (pExpandedItems) into foldedArray
+         set the fold_State [true] of displayView to foldedArray
+      end if
+      
       stack_Show displayView
    else
-      display_Data statusArray, gitShortFolder, "GIT Status"
+      put display_ConstructFoldState (pExpandedItems) into foldedArray
+      put the name of me into cContext
+      --
+      -- display_Data statusArray, gitShortFolder, "GIT Status"
+      display_StandardTool statusArray, gitShortFolder, "GIT Status", "tree", pRectHow, foldedArray, cContext
       put the result into displayView
+      
+      # Old untidy naming of tools
       set the title_Menu of displayView to "Global | GIT | Status | Menu"
       set the line_Menu of displayView to "Global | GIT | Line | File | Menu"
       set the doubleClick_Message ["me"] of displayView to "mDoubleUp_DisplayGitFile"
-      
-      # Experimental - sets the script of the displayView's card
-      put the script of displayView into oScript
-      put _DisplayGitStatusScript() into someScript
-      put oScript & CR & CR & someScript into newScript
-      set the script of displayView to newScript
-   end if
-   
-   # Work out folded
-   if pExpandedItems is not empty then
-      -- sensitive to capitalisation
-      -- set the expanded_Paths [true] of displayView to pExpandedItems
-      put display_ConstructFoldState (pExpandedItems) into foldedArray
-      set the fold_State [true] of displayView to foldedArray
    end if
    
    # Set display Menu Model
-   -- git_InitGlobalModel -- should happen when project is loaded
    set the itemdelimiter to slash
    put item -1 of gitFolder into projectName
    set the git_InitSettingsModel of displayView to projectName
    --
    return displayView
 end display_GitFolderStatus
+
+command display_GitProjectStatus projectName, pRepoFolder
+   put env_ConstructProjectFolder (projectName, pRepoFolder) into gitFolder
+   if gitFolder is empty then
+      breakpoint
+      return "Error, cannot find project:" && projectName
+   end if
+   --
+   display_GitFolderStatus gitFolder
+   put the result into dView
+   return dView
+end display_GitProjectStatus
 
 command display_GitStackRevision someObject, commitHash
    put the stack_Object of someObject into stackObject
@@ -267,67 +277,6 @@ function git_ListNotUpToDate
    return needsUpdating
 end git_ListNotUpToDate
 
-on mDoubleUp_DisplayGitFile arrayView, shortFileOrFolder
-   put the selected_Path of arrayView into sPath
-   --
-   put the git_SettingsModel of arrayView into cArray
-   put cArray ["gitFolder"] into gitFolder
-   --
-   put "(use 'git push' to publish your local commits)" into pushLine
-   replace "'" with quote in pushLine
-   --
-   text_AddTrailing gitFolder, slash
-   put gitFolder & shortFileOrFolder into fileOrFolder
-   get item 1 of sPath
-   switch
-      case it = "Changes not staged for commit:"
-         if the shiftKey is "Down" then
-            git_StageThenCommit gitFolder
-            --
-            set the expanded_Paths [true] of arrayView to "Branch"
-         end if
-         break
-      case it = "Changes to be committed:"
-         if the shiftKey is "Down" then
-            git_StageThenCommit gitFolder, "Branch"
-         end if
-         break
-      case it = "Untracked files:"
-         if the shiftKey is "Down" then
-            set the cursor to watch
-            git_AddEverything gitFolder
-            put the result into shellResult
-            if shellResult is not empty then
-               lcw_Notify shellResult
-            end if
-            display_GitFolderStatus gitFolder, "Changes not staged for commit:,Changes to be committed:"
-         end if
-         break
-      case shortFileOrFolder = pushLine
-         display_GitPushCurrentBranch gitFolder
-         --
-         put the title_Text of arrayView into projectName
-         put display_FindView ("Environment", "Not Up-to-Date") into dView
-         if exists (dView) then
-            set the deleted_Line of dView to projectName
-         end if
-         break
-      case there is a stack fileOrFolder
-         if the scriptonly of stack fileOrFolder is true then
-            edit the script of stack fileOrFolder
-         else
-            go to stack fileOrFolder
-         end if
-         break
-      case there is a folder fileOrFolder
-         finder_Reveal fileOrFolder
-         break
-      case there is a file fileOrFolder
-         atom_DisplayFile fileOrFolder 
-         break
-   end switch
-end mDoubleUp_DisplayGitFile
-
 
 --> Git | UpToDate
 -
@@ -517,20 +466,6 @@ end display_Gists
 
 --> Git | Display
 -
-command display_GitProjectStatus projectName, pRepoFolder
-   put env_ConstructProjectFolder (projectName, pRepoFolder) into gitFolder
-   if gitFolder is empty then
-      display_DebugHistory "display_GitProjectStatus"
-      --
-      put merge ("Cannot find project '[[projectName]]'") into someQuestion
-      lcw_AnswerWarning someQuestion
-   end if
-   --
-   display_GitFolderStatus gitFolder
-   put the result into dView
-   return dView
-end display_GitProjectStatus
-
 command display_GitPushCurrentBranch gitFolder
    git_PushBranch gitFolder
    put the result into shellResult
@@ -574,36 +509,6 @@ command display_GitStatus sObject
    put the result into arrayView
    return arrayView
 end display_GitStatus
-
-command display_GitProjectStatus projectName
-   put env_ConstructProjectFolder (projectName) into projectFolder
-   put git_GetCheckoutFolder (projectFolder) into gitFolder
-   display_GitFolderStatus gitFolder
-   return gitFolder
-end display_GitProjectStatus
-
-command display_GitProjectStatus projectName
-   put project_GetFolder (projectName) into projectFolder
-   if there is not a folder projectFolder then
-      if projectFolder is not empty then put projectFolder
-      put "Cannot locate a folder for project" && kwote(projectName) & "!" into sComment
-      answer warning merge (sComment)
-      breakpoint
-      exit to top
-   end if
-   
-   display_GitFolderStatus projectFolder
-   put the result into displayView
-   return displayView
-end display_GitProjectStatus
-
-command git_StageThenCommit gitFolder, pExpandedItems
-   put lcw_Ask ("Comment on this change...", "Minor changes") into someComment
-   git_Commit someComment, gitFolder
-   put the result into gitResult
-   display_GitFolderStatus gitFolder, pExpandedItems
-   return gitResult
-end git_StageThenCommit
 
 
 --> Display

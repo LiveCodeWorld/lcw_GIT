@@ -16,10 +16,34 @@ that allow access to other tools and are not too slow to draw the menus necessar
 -
 local LocalArray
 
+getprop menu_IconArray
+   local fData
+   put the name of me into mController
+   --
+   iconData_Add fData, "menu_DisplayGitStatus", mController, "Phosphor Regular/file plus"
+   iconData_Add fData, "menu_Pull", mController, "tabler/file check", "Pull"
+   iconData_Add fData, "menu_PushCurrentBranch", mController, "Phosphor Regular/list checks", "Status"
+   --
+   return fData
+end menu_IconArray
+
 getprop menu_Target [tObject]
+   put the tree_View of tObject into treeView
+   --
    _InitLocalArray tObject
-   return LocalArray ["gitFolder"]
+   --
+   return treeView
 end menu_Target
+
+private function _GitFolder dView
+   put LocalArray ["sModel"]["gitFolder"] into gitFolder
+   return gitFolder
+end _GitFolder
+
+private command _Refresh dView
+   put the title_Text of dView into projectName
+   display_GitRefreshProjectName projectName
+end _Refresh
 
 private command _InitLocalArray tObject
    put the display_View of tObject into dView
@@ -34,30 +58,6 @@ end _InitLocalArray
 private function _LocalValue someKey
    return LocalArray [someKey]
 end _LocalValue
-
-
---> Working on
--
--- getprop disabled_AddAllUntracked
-if _LocalValue ("gitFolder") is empty then return true
-put _FilesToAdd() into untrackedFiles
-if untrackedFiles is empty then
-   return true
-else
-   return false
-end if
-end disabled_AddAllUntracked
-
--- getprop disabled_StageThenCommit
-if _LocalValue ("gitFolder") is empty then return true
-if _FilesToAdd() is not empty then return true
-
-if _FilesToStageAndCommit() then
-   return false
-else
-   return true
-end if
-end disabled_StageThenCommit
 
 private function _FilesToAdd
    put _StatusArray() into statusArray
@@ -75,17 +75,33 @@ private function _StatusArray
    return statusArray
 end _StatusArray
 
+private function _FilesToStageAndCommit
+   put _LocalValue ("statusArray") into statusArray
+   --
+   put statusArray ["Changes not staged for commit:"] into notStagedArray
+   put statusArray ["Changes to be committed:"] into toCommitArray
+   switch
+      case notStagedArray is not empty
+      case toCommitArray is not empty
+         return true
+      default
+         return false
+   end switch
+end _FilesToStageAndCommit
+
+private function _ExistsGitStatusDisplay
+   put _LocalValue ("displayView") into displayView
+   return exists (displayView)
+end _ExistsGitStatusDisplay
+
+private command _RefreshGitStatus
+   put _LocalValue ("projectName") into projectName
+   display_GitRefreshProjectName projectName
+end _RefreshGitStatus
+
 getprop gitDocumentation_Params
    return the hkey_CaseConditions ["M menu_GitDocumentation"] of me
 end gitDocumentation_Params
-
--- getprop disabled_Pull
-return _LocalValue ("gitRemoteAddress") is empty
-end disabled_Pull
-
---  getprop disabled_PushCurrentBranch
-return _LocalValue ("gitRemoteAddress") is empty
-end disabled_PushCurrentBranch
 
 getprop disabled_PushCurrentBranch [gitFolder]
    put _StatusArray() into statusArray
@@ -129,7 +145,9 @@ end disabled_DisplayGitStatus
 
 --> Global | GIT | Basics | Menu
 -
-on menu_DisplayGitStatus gitFolder
+on menu_DisplayGitStatus treeView
+   put _GitFolder(dView) into gitFolder
+   --
    stack_SaveEdited "all"
    display_GitFolderStatus gitFolder
 end menu_DisplayGitStatus
@@ -165,12 +183,13 @@ on menu_TrackCommmitAndPush
    ask_PushGithub homeStack
 end menu_TrackCommmitAndPush
 
-on menu_Pull gitFolder   
+on menu_Pull dView
    -- TO PULL A new BRANCH FROM A REMOTE REPOSITORY
    -- put merge("git pull origin [[remoteBranch]]:[[newLocalBranch]]") into someShell
    -- put "git pull" into someShell
    -- put "git pull origin master" into someShell
    
+   put _GitFolder (dView) into gitFolder
    put git_CurrentBranchName (gitFolder) into currentBranchName
    put "git pull origin" && kwote (currentBranchName) into someShell
    put git_ExecuteShellCommand (someShell, gitFolder) into shellResult
@@ -179,9 +198,9 @@ on menu_Pull gitFolder
    display_GitPullResult shellResult, someShell
 end menu_Pull
 
-on menu_PushCurrentBranch gitFolder
-   -- TO push THE new BRANCH TO A REMOTE REPOSITORY
+on menu_PushCurrentBranch dView
    set the cursor to watch
+   put _GitFolder (dView) into gitFolder
    --
    display_GitPushCurrentBranch gitFolder
 end menu_PushCurrentBranch
@@ -213,30 +232,3 @@ on menu_GitDocumentation gitFolder, menuChoice
          break
    end switch
 end menu_GitDocumentation
-
-
---> Private
--
-private function _FilesToStageAndCommit
-   put _LocalValue ("statusArray") into statusArray
-   --
-   put statusArray ["Changes not staged for commit:"] into notStagedArray
-   put statusArray ["Changes to be committed:"] into toCommitArray
-   switch
-      case notStagedArray is not empty
-      case toCommitArray is not empty
-         return true
-      default
-         return false
-   end switch
-end _FilesToStageAndCommit
-
-private function _ExistsGitStatusDisplay
-   put _LocalValue ("displayView") into displayView
-   return exists (displayView)
-end _ExistsGitStatusDisplay
-
-private command _RefreshGitStatus
-   put _LocalValue ("projectName") into projectName
-   display_GitRefreshProjectName projectName
-end _RefreshGitStatus

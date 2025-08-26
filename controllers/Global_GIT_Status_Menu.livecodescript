@@ -24,6 +24,11 @@ private function _GitFolder dView
    return gitFolder
 end _GitFolder
 
+private command _Refresh dView
+   put the title_Text of dView into projectName
+   display_GitRefreshProjectName projectName
+end _Refresh
+
 getprop disabled_RemoveLockFiles dView
    put _GitFolder (dView) into gitFolder
    if git_LockFileExists (gitFolder) then
@@ -48,6 +53,8 @@ on menu_UpdateViewOfRemote dView
    --
    get git_UpdateViewOfRemote (gitFolder)
    put it & CR&CR & git_ShortBranchStatus (gitFolder)
+   --
+   _Refresh dView
 end menu_UpdateViewOfRemote
 
 on menu_ForceLocal dView
@@ -56,6 +63,7 @@ on menu_ForceLocal dView
    --
    put "push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD)" into gitBit
    put git_ExecuteBit (gitBit, gitFolder)
+   _Refresh dView
 end menu_ForceLocal
 
 on menu_SwitchToMaster dView
@@ -63,6 +71,7 @@ on menu_SwitchToMaster dView
    --
    git_CheckoutMaster gitFolder
    put the result
+   _Refresh dView
 end menu_SwitchToMaster
 
 on menu_CheckLockFiles dView
@@ -96,9 +105,7 @@ on __
 end __
 
 on menu_RefreshDisplay dView
-   put the title_Text of dView into projectName
-   --
-   display_GitRefreshProjectName projectName
+   _Refresh dView
 end menu_RefreshDisplay
 
 on menu_OpenInTerminal dView
@@ -113,6 +120,5 @@ end ___
 
 on submenu_Dev
    return "Global | GIT | Status | Dev | Menu"
-   return "Global | GIT | Dev | Menu"
 end submenu_Dev
 
