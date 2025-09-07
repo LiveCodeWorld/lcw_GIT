@@ -500,9 +500,9 @@ command display_GitPushCurrentBranch gitFolder
          --
          if exists (stack "Display Not Up-to-Date") then
             put the module_View of cd 1 of stack "Display Not Up-to-Date" into dataView
-            put the displayed_Index of dataView into pNames
+            put the index_Data of dataView into pNames
             line_Delete projectName, pNames
-            set the displayed_Index of dataView to pNames
+            set the index_Data of dataView to pNames
          end if
          return dView
    end switch
