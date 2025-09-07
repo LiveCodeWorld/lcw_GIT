@@ -14,8 +14,8 @@ local LocalArray
 
 --> Events
 -
-on mDoubleUp_DisplayGitFile dView, shortFile
-   breakpoint
+on mDoubleUp_DisplayGitFile treeView, shortFile
+   doubleClick_Tree treeView, shortFile
 end mDoubleUp_DisplayGitFile
 
 on footer_HiliteChange footerView, iName, iNum
@@ -102,17 +102,26 @@ end doubleClick_Tree
 
 --> Menu | Props
 -
-getprop menu_IconArray
-   -- see manu_ItemArray and footer_Data
+getprop menu_IconArray [sView]
    local fData
    put the name of me into mController
+   put the tree_Data of sView into tData
+   put the keys of tData into tKeys
    --
-   iconData_Add fData, "menu_AddAllUntracked", mController, "Phosphor Regular/file plus"
-   iconData_Add fData, "menu_StageThenCommit", mController, "tabler/file check", "Stage"
-   iconData_Add fData, "menu_RefreshGitStatus", mController, "Phosphor Regular/list checks", "Status"
+   if tKeys contains "Untracked" then
+      iconData_Add fData, "menu_AddAllUntracked", mController, "Phosphor/file plus"
+   end if
    --
-   put the name of stack "Global | Git | Basics | Menu" into  mController
-   iconData_Add fData, "menu_PushCurrentBranch", mController, "goal 24", "Push"
+   if tKeys is not "Branch" then
+      iconData_Add fData, "menu_StageThenCommit", mController, "tabler/file check", "Stage"
+   end if
+   --
+   if tKeys = "Branch" then
+      put the name of stack "Global | Git | Basics | Menu" into  mController
+      iconData_Add fData, "menu_PushCurrentBranch", mController, "goal 24", "Push"
+   end if
+   --
+   iconData_Add fData, "menu_RefreshGitStatus", mController, "Phosphor/list checks", "Status"
    --
    return fData
 end menu_IconArray
@@ -262,10 +271,17 @@ private command _Refresh sView
    put the tree_View of sView into treeView
    --
    put _GitFolder (sView) into gitFolder
-   -- display_GitFolderStatus gitFolder, treeView
    put git_FetchStatusArray (gitFolder) into statusArray
    set the displayed_Data of treeView to statusArray
+   --
+   _RefreshFooter sView
 end _Refresh
+
+private command _RefreshFooter sView
+   put the footer_View of sView into footerView
+   --
+   dispatch "Refresh" to footerView
+end _RefreshFooter
 
 
 --> Global | GIT | Line | File | Menu

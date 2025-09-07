@@ -44,14 +44,15 @@ command display_GitFolderStatus gitFolder, pExpandedItems, pRectHow
       
       stack_Show displayView
    else
-      put display_ConstructFoldState (pExpandedItems) into foldedArray
       put the name of me into cContext
+      put "mouse" into pRect
       --
-      -- display_Data statusArray, gitShortFolder, "GIT Status"
-      -- display_StandardTool statusArray, gitShortFolder, "GIT Status", "tree", pRectHow, foldedArray, cContext
-      
-      put empty into pRect
-      put "Branch" into pExpanded
+      -- put "Branch" into pExpanded
+      get keys (statusArray)
+      sort it
+      put line -1 of it into lastTitle
+      put lastTitle into pExpanded
+      --
       put "Global | GIT | Line | File | Menu" into fTitle
       --
       display_Tree statusArray, gitShortFolder, "GIT Status", fTitle, pExpanded, pRect, cContext
@@ -494,8 +495,16 @@ command display_GitPushCurrentBranch gitFolder
          lcw_Notify shellResult
          --
          display_GitFolderStatus gitFolder
-         put the result into displayView
-         return displayView
+         put the result into dView
+         put the title_Text of dView into projectName
+         --
+         if exists (stack "Display Not Up-to-Date") then
+            put the module_View of cd 1 of stack "Display Not Up-to-Date" into dataView
+            put the displayed_Index of dataView into pNames
+            line_Delete projectName, pNames
+            set the displayed_Index of dataView to pNames
+         end if
+         return dView
    end switch
 end display_GitPushCurrentBranch
 

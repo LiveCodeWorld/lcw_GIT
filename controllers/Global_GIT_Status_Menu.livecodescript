@@ -38,6 +38,16 @@ getprop disabled_RemoveLockFiles dView
    end if
 end disabled_RemoveLockFiles
 
+getprop checked_BasicFooter [dView]
+   get the footer_Title of the footer_View of dView 
+   return it = "Global | GIT | Basics | Menu"
+end checked_BasicFooter
+
+getprop checked_LineFooter [dView]
+   get the footer_Title of the footer_View of dView 
+   return it = "Global | GIT | Line | File | Menu"
+end checked_LineFooter
+
 
 --> Global | GIT | Status | Menu
 -
@@ -103,6 +113,16 @@ end insert_GitBasics
 
 on __
 end __
+
+on menu_LineFooter dView
+   set the footer_Title of the footer_View of dView to  "Global | GIT | Line | File | Menu"
+   set the footer_IsVisible of dView to true
+end menu_LineFooter
+
+on menu_BasicFooter dView
+   set the footer_Title of the footer_View of dView to "Global | GIT | Basics | Menu"
+   set the footer_IsVisible of dView to true
+end menu_BasicFooter
 
 on menu_RefreshDisplay dView
    _Refresh dView
