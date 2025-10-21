@@ -273,7 +273,8 @@ private command _Refresh sView
    --
    put _GitFolder (sView) into gitFolder
    put git_FetchStatusArray (gitFolder) into statusArray
-   set the displayed_Data of treeView to statusArray
+   -- set the displayed_Data of treeView to statusArray
+   set the displayed_Array ["Branch"] of treeView to statusArray
    --
    _RefreshFooter sView
 end _Refresh
