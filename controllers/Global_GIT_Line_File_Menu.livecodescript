@@ -122,6 +122,7 @@ getprop menu_IconArray [sView]
    end if
    --
    iconData_Add fData, "menu_RefreshGitStatus", mController, "Phosphor/list checks", "Status"
+   iconData_Add fData, "menu_ShowXterm", mController, "Fontawesome/code", "Xterm"
    --
    return fData
 end menu_IconArray
@@ -286,6 +287,10 @@ end _RefreshFooter
 
 --> Global | GIT | Line | File | Menu
 -
+on menu_ShowXterm mTarget
+   set the dataView_Terminal of mTarget to empty
+end menu_ShowXterm
+
 on menu_RefreshGitStatus sView
    stack_SaveEdited "all"
    _Refresh sView

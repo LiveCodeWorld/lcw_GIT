@@ -1754,11 +1754,11 @@ end git_CloneAndFetch
 -
 command file_CreateBinary binaryText, pFile
    /*
-   Rev uses unix style text internally (numToChar(10) for line endings)
-   That is "fld "Text" contains numtochar(10) = true"
+   Rev uses unix style text internally (numToNativeChar(10) for line endings)
+   That is "fld "Text" contains numToNativeChar(10) = true"
    
-   If written to a file on a Mac, using URL "file:", they're automatically translated to Macs native numToChar(13).
-   if using URL "binfile:", no translation happens, so numToChar(10) is preserved. 
+   If written to a file on a Mac, using URL "file:", they're automatically translated to Macs native numToNativeChar(13).
+   if using URL "binfile:", no translation happens, so numToNativeChar(10) is preserved. 
    */
    
    if pFile is empty then

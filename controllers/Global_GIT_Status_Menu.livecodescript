@@ -51,6 +51,24 @@ end checked_LineFooter
 
 --> Global | GIT | Status | Menu
 -
+on menu_ShowTerminal dView
+   # Git shell
+   put _GitFolder (dView) into gitFolder
+   put "cd" && kwote (gitFolder, "'") &CR& "git status" into gitShell
+   --
+   set the dataView_Terminal [true] of dView to gitShell
+end menu_ShowTerminal
+
+on menu_OpenInTerminal dView
+   put _GitFolder (dView) into gitFolder
+   --
+   put "cd" && kwote (gitFolder, "'") &CR& "git status" into someShell
+   terminal_DoShell someShell, true
+end menu_OpenInTerminal
+
+private on ____
+end ____
+
 on menu_RemoveLockFiles dView
    put _GitFolder (dView) into gitFolder
    --
@@ -127,13 +145,6 @@ end menu_BasicFooter
 on menu_RefreshDisplay dView
    _Refresh dView
 end menu_RefreshDisplay
-
-on menu_OpenInTerminal dView
-   put _GitFolder (dView) into gitFolder
-   --
-   put "cd" && kwote (gitFolder, "'") &CR& "git status" into someShell
-   terminal_DoShell someShell, true
-end menu_OpenInTerminal
 
 on ___
 end ___
